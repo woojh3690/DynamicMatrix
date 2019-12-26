@@ -1,16 +1,21 @@
 ﻿#include <iostream>
-#include "Matrix.h"
+#include <string>
+#include "Tensor.h"
+using namespace std;
 
+#define ICOL 1
+#define IROW 2
 int main()
 {
-	for (int i = 0; i < 1000; i++)
+	while (true)
 	{
-		Matrix<int> test(vector<int> {10, 10});
-		test[0] = 1;
-		test[0][1] = 2;
+		Tensor<string> a(vector<int> {100, 100, 3});
+		Tensor<string> b(vector<int> {100, 100, 3});
+		a[ICOL][IROW][2] = "hi";
 
-		Matrix<int> copyTest = test;
-		std::cout << copyTest[0][1] << std::endl;
-		std::cout << "Hello World! : " << i << std::endl;
+		a.Append(b, 1);
+		Tensor<string> copyTest(a);
+		string strTemp = copyTest[ICOL][IROW][2];
+		std::cout << strTemp.c_str() << std::endl;
 	}
 }
