@@ -1,5 +1,6 @@
-#pragma once
+﻿#pragma once
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 
@@ -9,7 +10,6 @@ class Tensor
 public:
 	Tensor(const vector<int> shape)
 	{
-		//this->shape = shape;
 		if (shape.size() != 0)
 		{
 			vector<int> child_shape(shape.begin() + 1, shape.end());
@@ -22,19 +22,7 @@ public:
 
 	Tensor(Tensor<T>& _Right)
 	{
-		this->~Tensor();
-		vector<int> rShape = _Right.Shape();
-		if (rShape.size() != 0)
-		{
-			for (int i = 0; i < rShape.front(); i++)
-			{
-				childLink.push_back(new Tensor<T>(_Right[i]));
-			}
-		}
-		else
-		{
-			this->value = _Right.value;
-		}
+		this->operator=(_Right);
 	}
 
 	~Tensor()
@@ -46,7 +34,6 @@ public:
 	}
 
 private:
-	//vector<int> shape;
 	vector<Tensor<T>*> childLink;
 	T value;
 
@@ -91,6 +78,26 @@ public:
 		}
 	}
 
+	Tensor<T>& Reshape(const vector<int> rshape)
+	{
+		Tensor<T>* newTsr = new Tensor(rshape);
+		vector<int> curShape = this->Shape();
+
+		// TODO 조건 검사
+
+		int size = 1;
+		for (int shape : curShape)
+			size *= shape;
+
+		for (int i = 0; i < size; i++)
+		{
+			T value = this->operator[](ChangeDim(i, curShape));
+			newTsr->operator[](ChangeDim(i, rshape)) = value;
+		}
+
+		return *newTsr;
+	}
+
 	/***************************************************/
 	/*                   operator                      */
 	/***************************************************/
@@ -108,6 +115,15 @@ public:
 		}
 	}
 
+	Tensor<T>& operator[](const vector<int> idxs) {
+		if (idxs.size() != 0)
+		{
+			vector<int> child_idxs(idxs.begin() + 1, idxs.end());
+			return childLink[idxs.front()]->operator[](child_idxs);
+		}
+		return *this;
+	}
+
 	Tensor<T>& operator=(const T n) {
 		if (childLink.size() != 0)
 		{
@@ -117,9 +133,23 @@ public:
 		return *this;
 	}
 
-	Tensor<T> operator=(const Tensor<T>& _Right)
+	Tensor<T>* operator=(Tensor<T>& _Right)
 	{
-		return this(_Right);
+		this->~Tensor();
+		vector<int> rShape = _Right.Shape();
+		if (rShape.size() != 0)
+		{
+			for (int i = 0; i < rShape.front(); i++)
+			{
+				childLink.push_back(new Tensor<T>(_Right[i]));
+			}
+		}
+		else
+		{
+			this->value = _Right.value;
+		}
+
+		return this;
 	}
 
 	operator T()
@@ -137,5 +167,28 @@ public:
 		vector<int> childShape = childLink[0]->Shape();
 		childShape.insert(childShape.begin(), childLink.size());
 		return childShape;
+	}
+
+public:
+	vector<int> ChangeDim(int index, vector<int> mshape)
+	{
+		std::reverse(mshape.begin(), mshape.end());
+
+		vector<int> matrixIdx;
+		int idx = 0;
+		int Dn = 1;
+		int multi = 1;
+		int alpha = 0;
+		for (int i = 0; i < mshape.size(); i++)
+		{
+			alpha += idx * multi;
+			multi *= Dn;
+			Dn = mshape[i];
+			idx = ((index - alpha) / multi) % Dn;
+			matrixIdx.push_back(idx);
+		}
+
+		std::reverse(matrixIdx.begin(), matrixIdx.end());
+		return matrixIdx;
 	}
 };

@@ -7,15 +7,20 @@ using namespace std;
 #define IROW 2
 int main()
 {
-	while (true)
-	{
-		Tensor<string> a(vector<int> {100, 100, 3});
-		Tensor<string> b(vector<int> {100, 100, 3});
-		a[ICOL][IROW][2] = "hi";
+	Tensor<int> a({10, 10, 10});
+	a[ICOL][IROW][2] = 1;
+	Tensor<int> b({10, 10, 10});
+	
 
-		a.Append(b, 1);
-		Tensor<string> copyTest(a);
-		string strTemp = copyTest[ICOL][IROW][2];
-		std::cout << strTemp.c_str() << std::endl;
-	}
+	a.Append(b);
+	Tensor<int> copytest = a;
+	int strtemp = copytest[ICOL][IROW][2];
+	std::cout << strtemp << std::endl;
+
+	int temp = copytest[{ICOL, IROW, 2}];
+
+	Tensor<int> test2 = a.Reshape({ 10, 20, 10 });
+
+	//a.ChangeDim(10, { 10, 20 });
+	cout << "끝" << endl;
 }
