@@ -84,7 +84,7 @@ public:
 		vector<int> curShape = this->Shape();
 
 		// TODO 조건 검사
-
+		
 		int size = 1;
 		for (int shape : curShape)
 			size *= shape;
@@ -169,7 +169,31 @@ public:
 		return childShape;
 	}
 
-public:
+	string ToString()
+	{
+		string result = "{";
+		vector<int> shape = this->Shape();
+
+		int len = 1;
+		for (auto shape : shape)
+		{
+			len *= shape;
+			result += to_string(shape) + ", ";
+		}
+		result.replace(result.size() - 2, result.size(), "}\n");
+
+		for (int i = 0; i < len; i++)
+		{
+			vector<int> index = ChangeDim(i, shape);
+			Tensor<T> tensor = this->operator[](index);
+			string data = to_string(tensor);
+			result += data + ", ";
+		}
+
+		return result;
+	}
+
+private:
 	vector<int> ChangeDim(int index, vector<int> mshape)
 	{
 		std::reverse(mshape.begin(), mshape.end());

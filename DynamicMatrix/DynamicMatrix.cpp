@@ -21,6 +21,8 @@ int main()
 
 	Tensor<int> test2 = a.Reshape({ 10, 20, 10 });
 
+	string strtest = test2.ToString();
+
 	//a.ChangeDim(10, { 10, 20 });
 	cout << "끝" << endl;
 }
