@@ -3,26 +3,29 @@
 #include "Tensor.h"
 using namespace std;
 
-#define ICOL 1
+#define ICOL 2
 #define IROW 2
 int main()
 {
-	Tensor<int> a({10, 10, 10});
-	a[ICOL][IROW][2] = 1;
-	Tensor<int> b({10, 10, 10});
+
+	Tensor<int> a({ IROW, ICOL });
 	
+	int count = 0;
+	for (int i = 0; i < IROW; i++)
+	{
+		for (int j = 0; j < ICOL; j++)
+		{
+			a[i][j] = count++;
+		}
+	}
 
-	a.Append(b);
-	Tensor<int> copytest = a;
-	int strtemp = copytest[ICOL][IROW][2];
-	std::cout << strtemp << std::endl;
+	Tensor<int> b = a;
 
-	int temp = copytest[{ICOL, IROW, 2}];
+	a.Append(b, 1);
 
-	Tensor<int> test2 = a.Reshape({ 10, 20, 10 });
+	a = a.Reshape({ 4, 2 });
 
-	string strtest = test2.ToString();
 
-	//a.ChangeDim(10, { 10, 20 });
+
 	cout << "끝" << endl;
 }

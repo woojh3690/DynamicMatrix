@@ -8,6 +8,18 @@ template <typename T>
 class Tensor
 {
 public:
+	Tensor()
+	{
+
+	}
+
+	Tensor(const T value)
+	{
+		Tensor<T>* item = new Tensor<T>;
+		item->value = value;
+		this->childLink.push_back(item);
+	}
+
 	Tensor(const vector<int> shape)
 	{
 		if (shape.size() != 0)
@@ -41,6 +53,12 @@ public:
 	/***************************************************/
 	/*                     API                         */
 	/***************************************************/
+	void Append(T value)
+	{
+		Tensor<T> item(value);
+		Append(item);
+	}
+
 	void Append(Tensor<T> tsr)
 	{
 		Append(tsr, 0);
@@ -48,14 +66,6 @@ public:
 
 	void Append(Tensor<T> tsr, const int axis)
 	{
-		int curShape = this->Shape().size();
-		int mtxShape = tsr.Shape().size();
-
-		if (curShape > mtxShape || curShape < mtxShape)
-		{
-			throw length_error("Argument tensor is invalid shape!");
-		}
-
 		if (axis == 0)
 		{
 			for (auto clink : tsr.childLink)
@@ -98,65 +108,6 @@ public:
 		return *newTsr;
 	}
 
-	/***************************************************/
-	/*                   operator                      */
-	/***************************************************/
-	Tensor<T>& operator[](const int n) {
-		if (Shape().size() > 0)
-		{
-			if (childLink.size() < (n + 1))
-				throw out_of_range("Out of range!");
-
-			return *childLink[n];
-		}
-		else
-		{
-			throw out_of_range("Out of dimention!");
-		}
-	}
-
-	Tensor<T>& operator[](const vector<int> idxs) {
-		if (idxs.size() != 0)
-		{
-			vector<int> child_idxs(idxs.begin() + 1, idxs.end());
-			return childLink[idxs.front()]->operator[](child_idxs);
-		}
-		return *this;
-	}
-
-	Tensor<T>& operator=(const T n) {
-		if (childLink.size() != 0)
-		{
-			throw invalid_argument("Can't allocate Rvalue to Tesnor(Lvalue)!");
-		}
-		value = n;
-		return *this;
-	}
-
-	Tensor<T>* operator=(Tensor<T>& _Right)
-	{
-		this->~Tensor();
-		vector<int> rShape = _Right.Shape();
-		if (rShape.size() != 0)
-		{
-			for (int i = 0; i < rShape.front(); i++)
-			{
-				childLink.push_back(new Tensor<T>(_Right[i]));
-			}
-		}
-		else
-		{
-			this->value = _Right.value;
-		}
-
-		return this;
-	}
-
-	operator T()
-	{
-		return value;
-	}
-
 	vector<int> Shape()
 	{
 		if (childLink.size() == 0)
@@ -191,6 +142,72 @@ public:
 		}
 
 		return result;
+	}
+
+	/***************************************************/
+	/*                   operator                      */
+	/***************************************************/
+	Tensor<T>& operator[](const int n) 
+	{
+		if (Shape().size() > 0)
+		{
+			if (childLink.size() < (n + 1))
+				throw out_of_range("Out of range!");
+
+			return *childLink[n];
+		}
+		else
+		{
+			throw out_of_range("Out of dimention!");
+		}
+	}
+
+	Tensor<T>& operator[](const vector<int> idxs) 
+	{
+		if (idxs.size() != 0)
+		{
+			vector<int> child_idxs(idxs.begin() + 1, idxs.end());
+			return childLink[idxs.front()]->operator[](child_idxs);
+		}
+		return *this;
+	}
+
+	Tensor<T>& operator=(const T n) 
+	{
+		if (childLink.size() != 0)
+		{
+			throw invalid_argument("Can't allocate Rvalue to Tesnor(Lvalue)!");
+		}
+		value = n;
+		return *this;
+	}
+
+	Tensor<T>* operator=(Tensor<T>& _Right)
+	{
+		this->~Tensor();
+		vector<int> rShape = _Right.Shape();
+		if (rShape.size() != 0)
+		{
+			for (int i = 0; i < rShape.front(); i++)
+			{
+				childLink.push_back(new Tensor<T>(_Right[i]));
+			}
+		}
+		else
+		{
+			this->value = _Right.value;
+		}
+
+		return this;
+	}
+
+	operator T()
+	{
+		if (childLink.size() != 0)
+		{
+			throw invalid_argument("Tensor can't cast to Rvalue.");
+		}
+		return value;
 	}
 
 private:
