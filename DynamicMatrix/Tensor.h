@@ -59,15 +59,16 @@ public:
 	void Append(T value)
 	{
 		Tensor<T> item(value);
-		Append(item);
+		Append(item, 0);
 	}
 
-	void Append(Tensor<T> tsr)
+	void Append(Tensor<T>& tsr)
 	{
-		Append(tsr, 0);
+		Tensor<T>* newTsr = new Tensor<T>(tsr);
+		childLink.push_back(newTsr);
 	}
 
-	void Append(Tensor<T> tsr, const int axis)
+	void Append(Tensor<T>& tsr, const int axis)
 	{
 		if (axis == 0)
 		{
@@ -215,23 +216,31 @@ public:
 		return *this;
 	}
 
-	Tensor<T>* operator=(Tensor<T>& _Right)
+	Tensor<T>& operator=(Tensor<T>& tsr)
 	{
 		this->~Tensor();
-		vector<int> rShape = _Right.Shape();
+		vector<int> rShape = tsr.Shape();
 		if (rShape.size() != 0)
 		{
 			for (int i = 0; i < rShape.front(); i++)
 			{
-				childLink.push_back(new Tensor<T>(_Right[i]));
+				childLink.push_back(new Tensor<T>(tsr[i]));
 			}
 		}
 		else
 		{
-			this->value = _Right.value;
+			this->value = tsr.value;
 		}
 
-		return this;
+		return *this;
+	}
+
+	Tensor<T>& operator+(Tensor<T>& tsr)
+	{
+		Tensor<T>* empty = new Tensor<T>;
+		empty->Append(*this);
+		empty->Append(tsr);
+		return *empty;
 	}
 
 	operator T()

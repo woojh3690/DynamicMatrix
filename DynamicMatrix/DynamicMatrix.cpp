@@ -7,24 +7,18 @@ using namespace std;
 #define IROW 2
 int main()
 {
+	Tensor<int> scala;
+	scala.Append(1);
+	scala.Append(2);
+	scala.Append(3);
+	scala.Append(4);
 
-	Tensor<int> a({ IROW, ICOL });
-	
-	int count = 0;
-	for (int i = 0; i < IROW; i++)
-	{
-		for (int j = 0; j < ICOL; j++)
-		{
-			a[i][j] = count++;
-		}
-	}
+	Tensor<int> matrix;
+	matrix.Append(scala, 0);
+	matrix.Append(scala, 0);
 
-	Tensor<int> b = a;
+	Tensor<int> test = matrix + matrix;
 
-	a.Append(b, 1);
-
-	a = a.Reshape({ 2, 2, 2 });
-
-	cout << a << endl;
+	cout << test << endl;
 	cout << "끝" << endl;
 }
