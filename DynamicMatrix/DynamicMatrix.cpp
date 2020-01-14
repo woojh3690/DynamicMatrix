@@ -14,8 +14,8 @@ int main()
 	scala.Append(4);
 
 	Tensor<int> matrix;
-	matrix.Append(scala, 0);
-	matrix.Append(scala, 0);
+	matrix.Append(scala);
+	matrix.Append(scala);
 
 	Tensor<int> test = matrix + matrix;
 

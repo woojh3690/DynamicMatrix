@@ -238,8 +238,8 @@ public:
 	Tensor<T>& operator+(Tensor<T>& tsr)
 	{
 		Tensor<T>* empty = new Tensor<T>;
-		empty->Append(*this);
-		empty->Append(tsr);
+		empty->Append(*this, 0);
+		empty->Append(tsr, 0);
 		return *empty;
 	}
 
