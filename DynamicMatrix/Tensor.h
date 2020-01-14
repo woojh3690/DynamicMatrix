@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <vector>
+#include <iostream>
 #include <algorithm>
 using namespace std;
 
@@ -10,7 +11,6 @@ class Tensor
 public:
 	Tensor()
 	{
-
 	}
 
 	Tensor(const T value)
@@ -36,6 +36,9 @@ public:
 	{
 		this->operator=(_Right);
 	}
+
+	template <typename NODETYPE>
+	friend ostream& operator<<(ostream& os, const Tensor<NODETYPE>& dt);
 
 	~Tensor()
 	{
@@ -88,12 +91,36 @@ public:
 		}
 	}
 
-	Tensor<T>& Reshape(const vector<int> rshape)
+	Tensor<T>& Reshape(const vector<int> newShape)
 	{
-		Tensor<T>* newTsr = new Tensor(rshape);
+		Tensor<T>* newTsr = new Tensor(newShape);
 		vector<int> curShape = this->Shape();
 
 		// TODO 조건 검사
+		int newShapeLen = 1;
+		for (int item : newShape)
+		{
+			newShapeLen *= item;
+		}
+
+		int curShapeLen = 1;
+		for (int item : curShape)
+		{
+			curShapeLen *= item;
+		}
+		
+		if (newShapeLen != curShapeLen)
+		{
+			string msgShape = "(";
+			for (int item : newShape)
+			{
+				msgShape += to_string(item) + ", ";
+			}
+			int msgSize = msgShape.size();
+			msgShape.replace(msgSize - 2, msgSize, ")");
+
+			throw invalid_argument("Cannot reshape array of size " + to_string(curShapeLen) + " into shape " + msgShape);
+		}
 		
 		int size = 1;
 		for (int shape : curShape)
@@ -102,7 +129,7 @@ public:
 		for (int i = 0; i < size; i++)
 		{
 			T value = this->operator[](ChangeDim(i, curShape));
-			newTsr->operator[](ChangeDim(i, rshape)) = value;
+			newTsr->operator[](ChangeDim(i, newShape)) = value;
 		}
 
 		return *newTsr;
@@ -122,25 +149,31 @@ public:
 
 	string ToString()
 	{
-		string result = "{";
-		vector<int> shape = this->Shape();
+		string result = "[";
+		int shapeSize = this->Shape().size();
 
-		int len = 1;
-		for (auto shape : shape)
+		if (shapeSize == 1)
 		{
-			len *= shape;
-			result += to_string(shape) + ", ";
+			for (auto child : this->childLink)
+			{
+				result += to_string(*child) + ", ";
+			}
+			result.replace(result.size() - 2, result.size(), "]");
 		}
-		result.replace(result.size() - 2, result.size(), "}\n");
-
-		for (int i = 0; i < len; i++)
+		else
 		{
-			vector<int> index = ChangeDim(i, shape);
-			Tensor<T> tensor = this->operator[](index);
-			string data = to_string(tensor);
-			result += data + ", ";
+			string enter;
+			for (int i = 0; i < shapeSize - 1; i++)
+			{
+				enter += "\n";
+			}
+			for (auto child : this->childLink)
+			{
+				result += child->ToString() + "," + enter;
+			}
+			result.replace(result.size() - shapeSize, result.size(), "]");
 		}
-
+		
 		return result;
 	}
 
@@ -233,3 +266,9 @@ private:
 		return matrixIdx;
 	}
 };
+
+template <typename NODETYPE>
+ostream & operator<<(ostream & os, Tensor<NODETYPE>& tsr)
+{
+	return os << tsr.ToString();
+}

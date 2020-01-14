@@ -23,9 +23,8 @@ int main()
 
 	a.Append(b, 1);
 
-	a = a.Reshape({ 4, 2 });
+	a = a.Reshape({ 2, 2, 2 });
 
-
-
+	cout << a << endl;
 	cout << "끝" << endl;
 }
