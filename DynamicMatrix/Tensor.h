@@ -52,23 +52,45 @@ private:
 	vector<Tensor<T>*> childLink;
 	T value;
 
+	vector<int> changeDim(int index, vector<int> mshape)
+	{
+		std::reverse(mshape.begin(), mshape.end());
+
+		vector<int> matrixIdx;
+		int idx = 0;
+		int Dn = 1;
+		int multi = 1;
+		int alpha = 0;
+		for (int i = 0; i < mshape.size(); i++)
+		{
+			alpha += idx * multi;
+			multi *= Dn;
+			Dn = mshape[i];
+			idx = ((index - alpha) / multi) % Dn;
+			matrixIdx.push_back(idx);
+		}
+
+		std::reverse(matrixIdx.begin(), matrixIdx.end());
+		return matrixIdx;
+	}
+
 public:
 	/***************************************************/
 	/*                     API                         */
 	/***************************************************/
-	void Append(T value)
+	void append(T value)
 	{
 		Tensor<T> item(value);
-		Append(item, 0);
+		append(item, 0);
 	}
 
-	void Append(Tensor<T>& tsr)
+	void append(Tensor<T>& tsr)
 	{
 		Tensor<T>* newTsr = new Tensor<T>(tsr);
 		childLink.push_back(newTsr);
 	}
 
-	void Append(Tensor<T>& tsr, const int axis)
+	void append(Tensor<T>& tsr, const int axis)
 	{
 		if (axis == 0)
 		{
@@ -79,23 +101,23 @@ public:
 		}
 		else
 		{
-			int curFront = this->Shape().front();
-			int mtxFront = tsr.Shape().front();
+			int curFront = this->shape().front();
+			int mtxFront = tsr.shape().front();
 
 			if (curFront != mtxFront)
 				throw invalid_argument("Argument axis is invalid value!");
 
 			for (int i = 0; i < curFront; i++)
 			{
-				childLink[i]->Append(tsr[i], axis - 1);
+				childLink[i]->append(tsr[i], axis - 1);
 			}
 		}
 	}
 
-	Tensor<T>& Reshape(const vector<int> newShape)
+	Tensor<T>& reshape(const vector<int> newShape)
 	{
 		Tensor<T>* newTsr = new Tensor(newShape);
-		vector<int> curShape = this->Shape();
+		vector<int> curShape = this->shape();
 
 		// TODO 조건 검사
 		int newShapeLen = 1;
@@ -114,12 +136,8 @@ public:
 		{
 			string msgShape = "(";
 			for (int item : newShape)
-			{
 				msgShape += to_string(item) + ", ";
-			}
-			int msgSize = msgShape.size();
-			msgShape.replace(msgSize - 2, msgSize, ")");
-
+			msgShape.replace(msgShape.size() - 2, msgShape.size(), ")");
 			throw invalid_argument("Cannot reshape array of size " + to_string(curShapeLen) + " into shape " + msgShape);
 		}
 		
@@ -129,29 +147,53 @@ public:
 
 		for (int i = 0; i < size; i++)
 		{
-			T value = this->operator[](ChangeDim(i, curShape));
-			newTsr->operator[](ChangeDim(i, newShape)) = value;
+			T value = this->operator[](changeDim(i, curShape));
+			newTsr->operator[](changeDim(i, newShape)) = value;
 		}
 
 		return *newTsr;
 	}
 
-	vector<int> Shape()
+	Tensor<T>& slice(const int start)
+	{
+		return slice(start, childLink.size());
+	}
+
+	Tensor<T>& slice(const int start, const int end)
+	{
+		Tensor<T>* newTsr = new Tensor<T>;
+
+		for (int i = start; i < end; i++)
+		{
+			Tensor<T> childTsr(*this->childLink[i]);
+			newTsr->append(childTsr);
+		}
+
+		return *newTsr;
+	}
+
+	void erase(const int index)
+	{
+		delete childLink[index];
+		childLink.erase(childLink.begin() + index);
+	}
+
+	vector<int> shape()
 	{
 		if (childLink.size() == 0)
 		{
 			return vector<int>();
 		}
 
-		vector<int> childShape = childLink[0]->Shape();
+		vector<int> childShape = childLink[0]->shape();
 		childShape.insert(childShape.begin(), childLink.size());
 		return childShape;
 	}
 
-	string ToString()
+	string toString()
 	{
 		string result = "[";
-		int shapeSize = this->Shape().size();
+		int shapeSize = this->shape().size();
 
 		if (shapeSize == 1)
 		{
@@ -170,7 +212,7 @@ public:
 			}
 			for (auto child : this->childLink)
 			{
-				result += child->ToString() + "," + enter;
+				result += child->toString() + "," + enter;
 			}
 			result.replace(result.size() - shapeSize, result.size(), "]");
 		}
@@ -183,7 +225,7 @@ public:
 	/***************************************************/
 	Tensor<T>& operator[](const int n) 
 	{
-		if (Shape().size() > 0)
+		if (shape().size() > 0)
 		{
 			if (childLink.size() < (n + 1))
 				throw out_of_range("Out of range!");
@@ -219,7 +261,7 @@ public:
 	Tensor<T>& operator=(Tensor<T>& tsr)
 	{
 		this->~Tensor();
-		vector<int> rShape = tsr.Shape();
+		vector<int> rShape = tsr.shape();
 		if (rShape.size() != 0)
 		{
 			for (int i = 0; i < rShape.front(); i++)
@@ -238,8 +280,8 @@ public:
 	Tensor<T>& operator+(Tensor<T>& tsr)
 	{
 		Tensor<T>* empty = new Tensor<T>;
-		empty->Append(*this, 0);
-		empty->Append(tsr, 0);
+		empty->append(*this, 0);
+		empty->append(tsr, 0);
 		return *empty;
 	}
 
@@ -252,32 +294,10 @@ public:
 		return value;
 	}
 
-private:
-	vector<int> ChangeDim(int index, vector<int> mshape)
-	{
-		std::reverse(mshape.begin(), mshape.end());
-
-		vector<int> matrixIdx;
-		int idx = 0;
-		int Dn = 1;
-		int multi = 1;
-		int alpha = 0;
-		for (int i = 0; i < mshape.size(); i++)
-		{
-			alpha += idx * multi;
-			multi *= Dn;
-			Dn = mshape[i];
-			idx = ((index - alpha) / multi) % Dn;
-			matrixIdx.push_back(idx);
-		}
-
-		std::reverse(matrixIdx.begin(), matrixIdx.end());
-		return matrixIdx;
-	}
 };
 
 template <typename NODETYPE>
 ostream & operator<<(ostream & os, Tensor<NODETYPE>& tsr)
 {
-	return os << tsr.ToString();
+	return os << tsr.toString();
 }
