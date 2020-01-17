@@ -11,10 +11,10 @@ int main()
 	clock_t start = clock();
 
 	Tensor<int> scala;
-	scala.append(1);
-	scala.append(2);
-	scala.append(3);
-	scala.append(4);
+	for (int i = 0; i < 100000; i++)
+	{
+		scala.append(i);
+	}
 
 	Tensor<int> matrix;
 	matrix.append(scala);
@@ -22,12 +22,12 @@ int main()
 
 	Tensor<int> test = matrix + matrix;
 	
-	test = test.reshape({ 2, 4, 2 });
+	test = test.reshape({ 40, 100, 100 });
 	cout << test << endl;
 
 	matrix.erase(0);
 
 	clock_t end = clock();
 	double result = (double)(end - start) / CLOCKS_PER_SEC;
-	cout << "끝" << endl;
+	cout << result << endl;
 }

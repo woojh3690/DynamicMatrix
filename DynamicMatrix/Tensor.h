@@ -20,7 +20,7 @@ public:
 		this->childLink.push_back(item);
 	}
 
-	Tensor(const vector<int> shape)
+	Tensor(vector<int> shape)
 	{
 		if (shape.size() != 0)
 		{
@@ -38,7 +38,7 @@ public:
 	}
 
 	template <typename NODETYPE>
-	friend ostream& operator<<(ostream& os, const Tensor<NODETYPE>& dt);
+	friend ostream& operator<<(ostream& os, Tensor<NODETYPE>& dt);
 
 	~Tensor()
 	{
@@ -114,7 +114,7 @@ public:
 		}
 	}
 
-	Tensor<T>& reshape(const vector<int> newShape)
+	Tensor<T>& reshape(vector<int> newShape)
 	{
 		Tensor<T>* newTsr = new Tensor(newShape);
 		vector<int> curShape = this->shape();
