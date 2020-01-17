@@ -170,6 +170,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="MatrixData.h" />
     <ClInclude Include="Tensor.h" />
   </ItemGroup>
   <ItemGroup>

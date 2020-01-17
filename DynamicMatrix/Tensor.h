@@ -22,7 +22,11 @@ public:
 
 	Tensor(vector<int> shape)
 	{
-		if (shape.size() != 0)
+		if (shape.empty())
+		{
+			throw invalid_argument("The Shape size is zero!");
+		}
+		else
 		{
 			vector<int> child_shape(shape.begin() + 1, shape.end());
 			for (int i = 0; i < shape.front(); i++)
@@ -180,20 +184,21 @@ public:
 
 	vector<int> shape()
 	{
-		if (childLink.size() == 0)
+		if (childLink.empty())
 		{
 			return vector<int>();
 		}
 
-		vector<int> childShape = childLink[0]->shape();
-		childShape.insert(childShape.begin(), childLink.size());
-		return childShape;
+		vector<int> curShape = childLink[0]->shape();
+		curShape.insert(curShape.begin(), childLink.size());
+		return curShape;
 	}
 
 	string toString()
 	{
 		string result = "[";
 		int shapeSize = this->shape().size();
+		int resultSize = result.size();
 
 		if (shapeSize == 1)
 		{
@@ -201,7 +206,7 @@ public:
 			{
 				result += to_string(*child) + ", ";
 			}
-			result.replace(result.size() - 2, result.size(), "]");
+			result.replace(resultSize - 2, resultSize, "]");
 		}
 		else
 		{
@@ -214,7 +219,7 @@ public:
 			{
 				result += child->toString() + "," + enter;
 			}
-			result.replace(result.size() - shapeSize, result.size(), "]");
+			result.replace(resultSize - shapeSize, resultSize, "]");
 		}
 		
 		return result;
@@ -225,22 +230,16 @@ public:
 	/***************************************************/
 	Tensor<T>& operator[](const int n) 
 	{
-		if (shape().size() > 0)
-		{
-			if (childLink.size() < (n + 1))
-				throw out_of_range("Out of range!");
-
-			return *childLink[n];
-		}
-		else
-		{
-			throw out_of_range("Out of dimention!");
-		}
+		return *childLink[n];
 	}
 
 	Tensor<T>& operator[](const vector<int> idxs) 
 	{
-		if (idxs.size() != 0)
+		if (idxs.empty())
+		{
+			throw invalid_argument("The Shape size is zero!");
+		}
+		else
 		{
 			vector<int> child_idxs(idxs.begin() + 1, idxs.end());
 			return childLink[idxs.front()]->operator[](child_idxs);
@@ -250,7 +249,7 @@ public:
 
 	Tensor<T>& operator=(const T n) 
 	{
-		if (childLink.size() != 0)
+		if (!childLink.empty())
 		{
 			throw invalid_argument("Can't allocate Rvalue to Tesnor(Lvalue)!");
 		}
@@ -262,16 +261,16 @@ public:
 	{
 		this->~Tensor();
 		vector<int> rShape = tsr.shape();
-		if (rShape.size() != 0)
+		if (rShape.empty())
+		{
+			this->value = tsr.value;
+		}
+		else
 		{
 			for (int i = 0; i < rShape.front(); i++)
 			{
 				childLink.push_back(new Tensor<T>(tsr[i]));
 			}
-		}
-		else
-		{
-			this->value = tsr.value;
 		}
 
 		return *this;
@@ -287,7 +286,7 @@ public:
 
 	operator T()
 	{
-		if (childLink.size() != 0)
+		if (!childLink.empty())
 		{
 			throw invalid_argument("Tensor can't cast to Rvalue.");
 		}
