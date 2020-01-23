@@ -22,17 +22,14 @@ public:
 
 	Tensor(vector<int> shape)
 	{
-		if (shape.empty())
-		{
-			throw invalid_argument("The Shape size is zero!");
-		}
-		else
+		if (!shape.empty())
 		{
 			vector<int> child_shape(shape.begin() + 1, shape.end());
 			for (int i = 0; i < shape.front(); i++)
 			{
 				childLink.push_back(new Tensor<T>(child_shape));
 			}
+			//throw invalid_argument("The Shape size is zero!");
 		}
 	}
 
@@ -85,7 +82,7 @@ public:
 	void append(T value)
 	{
 		Tensor<T> item(value);
-		append(item, 0);
+		concatenate(item, 0);
 	}
 
 	void append(Tensor<T>& tsr)
@@ -94,7 +91,7 @@ public:
 		childLink.push_back(newTsr);
 	}
 
-	void append(Tensor<T>& tsr, const int axis)
+	void concatenate(Tensor<T>& tsr, const int axis)
 	{
 		if (axis == 0)
 		{
@@ -113,48 +110,63 @@ public:
 
 			for (int i = 0; i < curFront; i++)
 			{
-				childLink[i]->append(tsr[i], axis - 1);
+				childLink[i]->concatenate(tsr[i], axis - 1);
 			}
 		}
 	}
 
 	Tensor<T>& reshape(vector<int> newShape)
 	{
-		Tensor<T>* newTsr = new Tensor(newShape);
-		vector<int> curShape = this->shape();
-
-		// TODO 조건 검사
+		int fillShapeIndex = -1;
 		int newShapeLen = 1;
-		for (int item : newShape)
+		for (int i = 0; i < newShape.size(); i++)
 		{
-			newShapeLen *= item;
+			if (newShape[i] != -1)
+			{
+				newShapeLen *= newShape[i];
+			}
+			else
+			{
+				fillShapeIndex = i;
+			}
 		}
 
+		vector<int> curShape = this->shape();
 		int curShapeLen = 1;
 		for (int item : curShape)
-		{
 			curShapeLen *= item;
-		}
-		
-		if (newShapeLen != curShapeLen)
-		{
-			string msgShape = "(";
-			for (int item : newShape)
-				msgShape += to_string(item) + ", ";
-			msgShape.replace(msgShape.size() - 2, msgShape.size(), ")");
-			throw invalid_argument("Cannot reshape array of size " + to_string(curShapeLen) + " into shape " + msgShape);
-		}
-		
-		int size = 1;
-		for (int shape : curShape)
-			size *= shape;
 
-		for (int i = 0; i < size; i++)
+		if (fillShapeIndex != -1)
+		{
+			if (curShapeLen % newShapeLen == 0)
+			{
+				int newDimShape = curShapeLen / newShapeLen;
+				newShape[fillShapeIndex] = newDimShape;
+				newShapeLen = newShapeLen * newDimShape;
+			}
+			else
+			{
+				throw invalid_argument("Cannot reshape array of size.");
+			}
+		}
+		else
+		{
+			if (newShapeLen != curShapeLen)
+			{
+				string msgShape = "(";
+				for (int item : newShape)
+					msgShape += to_string(item) + ", ";
+				msgShape.replace(msgShape.size() - 2, msgShape.size(), ")");
+				throw invalid_argument("Cannot reshape array of size " + to_string(curShapeLen) + " into shape " + msgShape);
+			}
+		}
+
+		Tensor<T>* newTsr = new Tensor(newShape);
+		for (int i = 0; i < curShapeLen; i++)
 		{
 			T value = this->operator[](changeDim(i, curShape));
 			newTsr->operator[](changeDim(i, newShape)) = value;
 		}
-
 		return *newTsr;
 	}
 
@@ -235,11 +247,7 @@ public:
 
 	Tensor<T>& operator[](const vector<int> idxs) 
 	{
-		if (idxs.empty())
-		{
-			throw invalid_argument("The Shape size is zero!");
-		}
-		else
+		if (!idxs.empty())
 		{
 			vector<int> child_idxs(idxs.begin() + 1, idxs.end());
 			return childLink[idxs.front()]->operator[](child_idxs);

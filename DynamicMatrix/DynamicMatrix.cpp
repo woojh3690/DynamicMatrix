@@ -5,7 +5,7 @@
 #include <time.h>
 using namespace std;
 
-#define ROW_SIZE 100000000
+#define ROW_SIZE 1000000
 /*Tensor<int> matrix;
 	matrix.append(scala);
 	matrix.append(scala);
@@ -26,15 +26,15 @@ int main()
 	{
 		scala.append("a");
 	}
-	for (int i = 0; i < ROW_SIZE; i++)
-	{
-		temp = scala[i];
-	}
+	Tensor<string> reshapedTensor = scala.reshape({ -1, 5 });
+
 	double tensorReuslt = (double)(clock() - start) / CLOCKS_PER_SEC;
 	cout << tensorReuslt << endl;
+
+	auto shape = reshapedTensor.shape();
 	//-----------------------------------------------------------
 
-	start = clock();
+	/*start = clock();
 	MatrixData table;
 	table.noOfRow = ROW_SIZE;
 	table.noOfCol = 1;
@@ -49,7 +49,7 @@ int main()
 		temp = table.data[i][0];
 	}
 	double MatrixResult = (double)(clock() - start) / CLOCKS_PER_SEC;
-	cout << MatrixResult << endl;
+	cout << MatrixResult << endl;*/
 
 	cout << "끝" << endl;
 }
