@@ -1,55 +1,43 @@
 ﻿#include <iostream>
 #include <string>
 #include "Tensor.h"
-#include "MatrixData.h"
+#include "PerformaceTest.h"
 #include <time.h>
 using namespace std;
 
-#define ROW_SIZE 1000000
-/*Tensor<int> matrix;
-	matrix.append(scala);
-	matrix.append(scala);
-
-	Tensor<int> test = matrix + matrix;
-	
-	test = test.reshape({ 40, 100, 100 });
-	cout << test << endl;
-
-	matrix.erase(0);*/
 int main()
 {
-	string temp;
+	PerformanceTest test;
+	test.matmulTest();
 
-	clock_t start = clock();
-	Tensor<string> scala;
-	for (int i = 0; i < ROW_SIZE; i++)
-	{
-		scala.append("a");
-	}
-	Tensor<string> reshapedTensor = scala.reshape({ -1, 5 });
 
-	double tensorReuslt = (double)(clock() - start) / CLOCKS_PER_SEC;
-	cout << tensorReuslt << endl;
+	
+	/*Tensor<int> tensor1({ 3, 3 });
+	tensor1[0][0] = 1;
+	tensor1[0][1] = 2;
+	tensor1[0][2] = 1;
+	tensor1[1][0] = 0;
+	tensor1[1][1] = 1;
+	tensor1[1][2] = 0;
+	tensor1[2][0] = 2;
+	tensor1[2][1] = 3;
+	tensor1[2][2] = 4;
+	cout << tensor1 << endl << endl;
 
-	auto shape = reshapedTensor.shape();
-	//-----------------------------------------------------------
 
-	/*start = clock();
-	MatrixData table;
-	table.noOfRow = ROW_SIZE;
-	table.noOfCol = 1;
-	table.MallocData();
-	for (int i = 0; i < ROW_SIZE; i++)
-	{
-		table.data[i][0] = "a";
-	}
+	Tensor<int> tensor2({ 3, 2 });
+	tensor2[0][0] = 2;
+	tensor2[0][1] = 5;
+	tensor2[1][0] = 6;
+	tensor2[1][1] = 7;
+	tensor2[2][0] = 1;
+	tensor2[2][1] = 8;
+	cout << tensor2 << endl << endl;
 
-	for (int i = 0; i < ROW_SIZE; i++)
-	{
-		temp = table.data[i][0];
-	}
-	double MatrixResult = (double)(clock() - start) / CLOCKS_PER_SEC;
-	cout << MatrixResult << endl;*/
+	Tensor<int> result = tensor1.matmul(tensor2);
 
-	cout << "끝" << endl;
+	cout << result << endl;*/
+
+	
+	printf("end");
 }

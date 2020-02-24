@@ -2,6 +2,9 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <string>
+#include <omp.h>
+#include <Windows.h>
 using namespace std;
 
 
@@ -25,11 +28,15 @@ public:
 		if (!shape.empty())
 		{
 			vector<int> child_shape(shape.begin() + 1, shape.end());
+			//#pragma omp parallel for
 			for (int i = 0; i < shape.front(); i++)
 			{
-				childLink.push_back(new Tensor<T>(child_shape));
+				Tensor<T>* child_Tensor = new Tensor<T>(child_shape);
+				/*#pragma omp critical
+				{*/
+					childLink.push_back(child_Tensor);
+				//}
 			}
-			//throw invalid_argument("The Shape size is zero!");
 		}
 	}
 
@@ -210,7 +217,6 @@ public:
 	{
 		string result = "[";
 		int shapeSize = this->shape().size();
-		int resultSize = result.size();
 
 		if (shapeSize == 1)
 		{
@@ -218,7 +224,7 @@ public:
 			{
 				result += to_string(*child) + ", ";
 			}
-			result.replace(resultSize - 2, resultSize, "]");
+			result.replace(result.size() - 2, result.size(), "]");
 		}
 		else
 		{
@@ -231,10 +237,40 @@ public:
 			{
 				result += child->toString() + "," + enter;
 			}
-			result.replace(resultSize - shapeSize, resultSize, "]");
+			result.replace(result.size() - shapeSize, result.size(), "]");
 		}
 		
 		return result;
+	}
+
+	Tensor<T>& matmul(Tensor<T>& tsr)
+	{
+		vector<int> thisShape = this->shape();
+		vector<int> tsrShape = tsr.shape();
+		if (thisShape.back() != tsrShape.front())
+		{
+			throw invalid_argument("Argument axis is invalid value!");
+		}
+		
+		vector<int> newShape = { thisShape.front(), tsrShape.back() };
+		Tensor<T>* newTsr = new Tensor<T>(newShape);
+
+		#pragma omp parallel for
+		for (int i = 0; i < thisShape.front(); i++)
+		{
+			for (int tsrI = 0; tsrI < tsrShape.back(); tsrI++)
+			{
+				T newVal = 0;
+				for (int j = 0; j < thisShape.back(); j++)
+				{
+					T thisVal = this->operator[](i).operator[](j);
+					T tsrVal = tsr[j][tsrI];
+					newVal += thisVal * tsrVal;
+				}
+				newTsr->operator[](i).operator[](tsrI) = newVal;
+			}
+		}
+		return *newTsr;
 	}
 
 	/***************************************************/
@@ -287,8 +323,8 @@ public:
 	Tensor<T>& operator+(Tensor<T>& tsr)
 	{
 		Tensor<T>* empty = new Tensor<T>;
-		empty->append(*this, 0);
-		empty->append(tsr, 0);
+		empty->append(*this);
+		empty->append(tsr);
 		return *empty;
 	}
 

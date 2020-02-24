@@ -18,12 +18,18 @@
     <ClCompile Include="DynamicMatrix.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="PerformanceTest.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Tensor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="MatrixData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="PerformaceTest.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
