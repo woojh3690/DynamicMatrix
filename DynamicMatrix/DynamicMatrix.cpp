@@ -7,12 +7,10 @@ using namespace std;
 
 int main()
 {
-	PerformanceTest test;
-	test.matmulTest();
+	/*PerformanceTest test;
+	test.matmulTest();*/
 
-
-	
-	/*Tensor<int> tensor1({ 3, 3 });
+	Tensor<int> tensor1({ 3, 3 });
 	tensor1[0][0] = 1;
 	tensor1[0][1] = 2;
 	tensor1[0][2] = 1;
@@ -34,9 +32,11 @@ int main()
 	tensor2[2][1] = 8;
 	cout << tensor2 << endl << endl;
 
-	Tensor<int> result = tensor1.matmul(tensor2);
+	//Tensor<int> result = tensor1.matmul(tensor2);
+	//cout << result << endl;
 
-	cout << result << endl;*/
+	tensor2.transpose();
+	cout << tensor2 << endl;
 
 	
 	printf("end");

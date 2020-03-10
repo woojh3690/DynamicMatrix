@@ -247,6 +247,11 @@ public:
 	{
 		vector<int> thisShape = this->shape();
 		vector<int> tsrShape = tsr.shape();
+
+		// 현재는 두 계산할려고하는 함수가 둘다 2차원 행렬일때만 지원
+		if (thisShape.size() != 2 || tsrShape.size() != 2)
+			throw invalid_argument("Currently the we support 2D Matrix multiply.");
+
 		if (thisShape.back() != tsrShape.front())
 		{
 			throw invalid_argument("Argument axis is invalid value!");
@@ -271,6 +276,30 @@ public:
 			}
 		}
 		return *newTsr;
+	}
+
+	void transpose()
+	{
+		vector<int> curShpae = this->shape();
+
+		// 현재는 2차원 텐서에 전치만 지원
+		if (curShpae.size() != 2)
+		{
+			throw invalid_argument("Currently we support only 2D Tensor.");
+		}
+
+		Tensor<T>* newTsr = new Tensor<T>({ curShpae[1], curShpae[0] });
+		
+		for (int i = 0; i < curShpae[0]; i++)
+		{
+			for (int j = 0; j < curShpae[1]; j++)
+			{
+				newTsr->operator[](j).operator[](i) 
+					= this->operator[](i).operator[](j);
+			}
+		}
+		this->~Tensor();
+		this->childLink = newTsr->childLink;
 	}
 
 	/***************************************************/
