@@ -7,6 +7,17 @@
 #include <Windows.h>
 using namespace std;
 
+#define MAKE_OPERATOR(sign) \
+Tensor<T>& operator##sign##(Tensor<T>& tsr) \
+{ \
+	Tensor<bool>* compare = new Tensor<bool>; \
+} \
+ \
+Tensor<T>& operator##sign##(double rValue) \
+{ \
+	Tensor<bool> compare(rValue); \
+	operator##sign##(compare); \
+}
 
 template <typename T>
 class Tensor
@@ -37,6 +48,17 @@ public:
 					childLink.push_back(child_Tensor);
 				//}
 			}
+		}
+	}
+
+	Tensor(vector<int> shape, T initValue)
+	{
+		Tensor(shape);
+
+		vector<int> curShape = this->shape;
+		for (std::size_t i = 0; i < indexLen; i++)
+		{
+			this->operator[](changeDim(i, curShape)) = initValue;
 		}
 	}
 
@@ -124,52 +146,35 @@ public:
 
 	Tensor<T>& reshape(vector<int> newShape)
 	{
-		int fillShapeIndex = -1;
-		int newShapeLen = 1;
+		int emptyIndex = -1;
+		std::size_t newVolume = 1;
 		for (int i = 0; i < newShape.size(); i++)
 		{
 			if (newShape[i] != -1)
-			{
-				newShapeLen *= newShape[i];
-			}
+				newVolume *= newShape[i];
 			else
-			{
-				fillShapeIndex = i;
-			}
+				emptyIndex = i;
 		}
 
-		vector<int> curShape = this->shape();
-		int curShapeLen = 1;
-		for (int item : curShape)
-			curShapeLen *= item;
-
-		if (fillShapeIndex != -1)
+		std::size_t curVolume = this->volume();
+		if (emptyIndex != -1 && (curVolume % newVolume == 0))
 		{
-			if (curShapeLen % newShapeLen == 0)
-			{
-				int newDimShape = curShapeLen / newShapeLen;
-				newShape[fillShapeIndex] = newDimShape;
-				newShapeLen = newShapeLen * newDimShape;
-			}
-			else
-			{
-				throw invalid_argument("Cannot reshape array of size.");
-			}
+			int newDimShape = curVolume / newVolume;
+			newShape[emptyIndex] = newDimShape;
+			newVolume *= newDimShape;
 		}
-		else
+
+		if (newVolume != curVolume)
 		{
-			if (newShapeLen != curShapeLen)
-			{
-				string msgShape = "(";
-				for (int item : newShape)
-					msgShape += to_string(item) + ", ";
-				msgShape.replace(msgShape.size() - 2, msgShape.size(), ")");
-				throw invalid_argument("Cannot reshape array of size " + to_string(curShapeLen) + " into shape " + msgShape);
-			}
+			string msgShape = "(";
+			for (int item : newShape)
+				msgShape += to_string(item) + ", ";
+			msgShape.replace(msgShape.size() - 2, msgShape.size(), ")");
+			throw invalid_argument("Cannot reshape array of size " + to_string(curVolume) + " into shape " + msgShape);
 		}
 
 		Tensor<T>* newTsr = new Tensor(newShape);
-		for (int i = 0; i < curShapeLen; i++)
+		for (int i = 0; i < curVolume; i++)
 		{
 			T value = this->operator[](changeDim(i, curShape));
 			newTsr->operator[](changeDim(i, newShape)) = value;
@@ -303,6 +308,19 @@ public:
 		return *this;
 	}
 
+	std::size_t volume()
+	{
+		std::size_t indexLen = 1;
+		for (auto size : this->shape)
+			indexLen *= size;
+		return indexLen;
+	}
+
+	int size()
+	{
+		return this->childLink.size();
+	}
+
 	/***************************************************/
 	/*                   operator                      */
 	/***************************************************/
@@ -350,12 +368,29 @@ public:
 		return *this;
 	}
 
-	Tensor<T>& operator+(Tensor<T>& tsr)
+	//MAKE_OPERATOR(>);
+
+	Tensor<T>& operator>(Tensor<T>& compare)
 	{
-		Tensor<T>* empty = new Tensor<T>;
-		empty->append(*this);
-		empty->append(tsr);
-		return *empty;
+		if (tsr.size() == 1)
+		{
+			compare = Tensor(this->shape(), tsr);
+		}
+		else if (tsr.size() != this->size())
+		{
+			throw invalid_argument("RValue size must be 1 or " + this->size());
+		}
+
+		for (compare)
+		{
+
+		}
+	}
+
+	Tensor<T>& operator>(double rValue)
+	{
+		Tensor<bool> compare(rValue);
+		operator>(compare);
 	}
 
 	operator T()
