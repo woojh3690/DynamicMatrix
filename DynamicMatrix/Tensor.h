@@ -278,7 +278,7 @@ public:
 		return *newTsr;
 	}
 
-	void transpose()
+	Tensor<T>& transpose()
 	{
 		vector<int> curShpae = this->shape();
 
@@ -300,6 +300,7 @@ public:
 		}
 		this->~Tensor();
 		this->childLink = newTsr->childLink;
+		return *this;
 	}
 
 	/***************************************************/
