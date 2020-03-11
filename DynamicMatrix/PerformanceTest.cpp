@@ -12,11 +12,11 @@ PerformanceTest::~PerformanceTest()
 {
 }
 
-void PerformanceTest::test()
+void PerformanceTest::allocateTest()
 {
 	cout << "--------------- example 1 ---------------" << endl;
 	clock_t start = clock();
-	Tensor<int> tensor1({ 100, 100, 1000 });
+	Tensor<int> tensor1({ 1000000, 2 });
 	cout << "run time = " << clock() - start << " milliseconds." << endl;
 }
 
@@ -85,3 +85,39 @@ void PerformanceTest::matmulTest()
 	}
 	cout << "run time = " << clock() - start << " milliseconds." << endl;
 }
+
+void PerformanceTest::transposeTest()
+{
+	Tensor<int> tensor1({ 128, 128 }, 100);
+
+	cout << "--------------- transpose test ---------------" << endl;
+	clock_t start = clock();
+	for (int i = 0; i < 1000; i++)
+	{
+		tensor1.transpose();
+	}
+	cout << "run time = " << clock() - start << " milliseconds." << endl;
+}
+
+void PerformanceTest::copyTest()
+{
+	Tensor<int> tensor1({ 128, 128 }, 100);
+	Tensor<int> tensor2;
+
+	cout << "--------------- copy test ---------------" << endl;
+	clock_t start = clock();
+	for (int i = 0; i < 100; i++)
+	{
+		tensor2 = tensor1;
+	}
+	cout << "run time = " << clock() - start << " milliseconds." << endl;
+}
+
+void PerformanceTest::copyRun()
+{
+	Tensor<int> tensor1({ 2, 3, 4 }, 100);
+	Tensor<int> tensor2;
+	tensor2 = tensor1;
+	cout << "tensor2 : " << tensor2 << endl;
+}
+

@@ -6,7 +6,10 @@ public:
 	PerformanceTest();
 	~PerformanceTest();
 public:
-	void test();
+	void allocateTest();
 	void runTest();
 	void matmulTest();
+	void transposeTest();
+	void copyTest();
+	void copyRun();
 };
