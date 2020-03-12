@@ -12,4 +12,6 @@ public:
 	void transposeTest();
 	void copyTest();
 	void copyRun();
+	void compareTest();
+	void selectTest();
 };

@@ -121,3 +121,44 @@ void PerformanceTest::copyRun()
 	cout << "tensor2 : " << tensor2 << endl;
 }
 
+void PerformanceTest::compareTest()
+{
+	Tensor<double> a({33, 33}, 2);
+	//Tensor<double> b({33, 33}, 3);
+	Tensor<double> b(3);
+	Tensor<double> result = (a * b);
+
+	cout << "a" << endl << a << endl;
+	//cout << "b" << endl << b << endl << endl;
+
+	cout << result << endl;
+}
+
+void PerformanceTest::selectTest()
+{
+	Tensor<double> a({ 3, 3 });
+	a[0][0] = 0;
+	a[0][1] = 1;
+	a[0][2] = 2;
+	a[1][0] = 3;
+	a[1][1] = 4;
+	a[1][2] = 5;
+	a[2][0] = 6;
+	a[2][1] = 7;
+	a[2][2] = 8;
+	Tensor<double> b({ 3, 3 } , 4);
+
+	Tensor<bool> compare = (a <= b);
+
+	Tensor<double> result = compare.select(a, b);
+
+	cout << "a" << endl << a << endl;
+	cout << "b" << endl << b << endl << endl;
+
+	cout << compare << endl << endl;
+
+	cout << result << endl;
+
+
+}
+

@@ -9,12 +9,12 @@
 #include <Windows.h>
 using namespace std;
 
-#define MAKE_COMPARE_OPERATOR(sign) \
-Tensor<bool>& operator##sign##(Tensor<T>& compare) \
+#define MAKE_OPERATOR(sign, returnType) \
+Tensor<##returnType##>& operator##sign##(Tensor<T>& compare) \
 { \
 	if (compare.size() == 1) \
 	{ \
-		Tensor<T> a(this->shape(), compare.operator[](0)); \
+		Tensor<double> a(this->shape(), compare.operator[](0)); \
 		compare = a; \
 	} \
 	else if (compare.size() != this->size()) \
@@ -23,16 +23,16 @@ Tensor<bool>& operator##sign##(Tensor<T>& compare) \
 			this->strShape() + "shape."); \
 	} \
  \
-	Tensor<bool>* boolTsr = new Tensor<bool>(compare.shape()); \
+	Tensor<##returnType##>* boolTsr = new Tensor<##returnType##>(compare.shape()); \
  \
 	vector<int> curShape = this->shape(); \
 	vector<int> idx; \
 	for (int i = 0; i < this->volume(); i++) \
 	{ \
-		idx = changeDim(i, curShape); \
+		idx = changeIdxOfDim(i, curShape); \
 		T curValue = this->operator[](idx); \
 		T compareValue = compare[idx]; \
-		bool boolValue = curValue ##sign## compareValue; \
+		##returnType boolValue = curValue ##sign## compareValue; \
 		boolTsr->operator[](idx) = boolValue; \
 	} \
  \
@@ -73,7 +73,7 @@ public:
 		vector<int> curShape = this->shape();
 		for (int i = 0; i < this->volume(); i++)
 		{
-			this->operator[](changeDim(i, curShape)) = initValue;
+			this->operator[](changeIdxOfDim(i, curShape)) = initValue;
 		}
 	}
 
@@ -97,7 +97,7 @@ private:
 	vector<Tensor<T>*> m_childLink;
 	T m_value;
 
-	vector<int> changeDim(int index, vector<int> fomatShape)
+	vector<int> changeIdxOfDim(int index, vector<int> fomatShape)
 	{
 		std::reverse(fomatShape.begin(), fomatShape.end());
 
@@ -189,8 +189,8 @@ public:
 		vector<int> curShape = this->shape();
 		for (int i = 0; i < curVolume; i++)
 		{
-			T value = this->operator[](changeDim(i, curShape));
-			newTsr->operator[](changeDim(i, newShape)) = value;
+			T value = this->operator[](changeIdxOfDim(i, curShape));
+			newTsr->operator[](changeIdxOfDim(i, newShape)) = value;
 		}
 		return *newTsr;
 	}
@@ -300,7 +300,7 @@ public:
 		vector<int> newShape = { thisShape.front(), tsrShape.back() };
 		Tensor<T>* newTsr = new Tensor<T>(newShape);
 
-#pragma omp parallel for
+		#pragma omp parallel for
 		for (int i = 0; i < thisShape.front(); i++)
 		{
 			for (int tsrI = 0; tsrI < tsrShape.back(); tsrI++)
@@ -353,15 +353,38 @@ public:
 		return m_childLink.size();
 	}
 
-	//Tensor<T> select(Tensor<T> thenTsr, Tensor<T> elseTsr)
-	//{
-	//	// 현재 이 인스턴스가 select 함수를 사용할 수 있는 bool 타입 Tensor 인지 확인
-	//	if (!std::is_same<T, bool>::value)
-	//		throw invalid_argument("The select() function only can use Tensor type bool.");
+	template<typename selectDerived>
+	Tensor<selectDerived>& select(Tensor<selectDerived> thenTsr, Tensor<selectDerived> elseTsr)
+	{
+		vector<int> curShape = this->shape();
 
-	//	// 이 인스턴스와 인자값들에 shape이 같은지 확인
+		if (!std::is_same<T, bool>::value)
+			throw invalid_argument("The select() function only can use Tensor type bool.");
 
-	//}
+		// 이 인스턴스와 인자값들에 shape이 같은지 확인
+		if ((curShape != thenTsr.shape()) || (curShape != elseTsr.shape()))
+		{
+			throw invalid_argument("The argument should be same shape of this.");
+		}
+
+		Tensor<selectDerived>* selectTsr = new Tensor<selectDerived>(curShape);
+		#pragma omp parallel for
+		for (int i = 0; i < this->volume(); i++)
+		{
+			vector<int> idx = changeIdxOfDim(i, curShape);
+			T boolValue = this->operator[](idx);
+			if (boolValue)
+			{
+				selectTsr->operator[](idx) = thenTsr[idx];
+			}
+			else
+			{
+				selectTsr->operator[](idx) = elseTsr[idx];
+			}
+		}
+
+		return *selectTsr;
+	}
 
 	/***************************************************/
 	/*                   operator                      */
@@ -410,10 +433,17 @@ public:
 		return *this;
 	}
 
-	MAKE_COMPARE_OPERATOR(>);
-	MAKE_COMPARE_OPERATOR(<);
-	MAKE_COMPARE_OPERATOR(>=);
-	MAKE_COMPARE_OPERATOR(<=);
+	MAKE_OPERATOR(>, bool);
+	MAKE_OPERATOR(<, bool);
+	MAKE_OPERATOR(>=, bool);
+	MAKE_OPERATOR(<=, bool);
+
+	MAKE_OPERATOR(-, double);	
+	MAKE_OPERATOR(+, double);
+	MAKE_OPERATOR(*, double);
+	MAKE_OPERATOR(/ , double);
+
+	MAKE_OPERATOR(%, double);
 
 	operator T()
 	{

@@ -174,12 +174,14 @@
   <ItemGroup>
     <ClInclude Include="MatrixData.h" />
     <ClInclude Include="PerformaceTest.h" />
-    <ClInclude Include="Shape.h" />
     <ClInclude Include="Tensor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DynamicMatrix.cpp" />
     <ClCompile Include="PerformanceTest.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

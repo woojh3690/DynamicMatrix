@@ -1,0 +1,4 @@
+// 힌트 파일은 Visual Studio IDE에서 함수 및 매크로 이름과 같은 Visual C++ 식별자를
+// 해석하는 데 도움이 됩니다.
+// 자세한 내용은 다음을 참조하세요. https://go.microsoft.com/fwlink/?linkid=865984
+#define MAKE_COMPARE_OPERATOR(sign, returnType) Tensor<##returnType##>& operator##sign##(Tensor<T>& compare) { if (compare.size() == 1) { Tensor<double> a(this->shape(), compare.operator[](0)); compare = a; } else if (compare.size() != this->size()) { throw invalid_argument("RValue size must be (1) or " + this->strShape() + "shape."); } Tensor<##returnType##>* boolTsr = new Tensor<##returnType##>(compare.shape()); vector<int> curShape = this->shape(); vector<int> idx; for (int i = 0; i < this->volume(); i++) { idx = changeIdxOfDim(i, curShape); T curValue = this->operator[](idx); T compareValue = compare[idx];##returnType boolValue = curValue##sign##compareValue; boolTsr->operator[](idx) = boolValue; } return *boolTsr; }
