@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿#ifndef TENSOR_H_
+#define TENSOR_H_
+
 #include <vector>
 #include <iostream>
 #include <algorithm>
@@ -179,7 +181,7 @@ public:
 
 		if (newVolume != curVolume)
 		{
-			throw invalid_argument("Cannot reshape array of size " + 
+			throw invalid_argument("Cannot reshape array of size " +
 				to_string(curVolume) + " into shape " + this->strShape(newShape));
 		}
 
@@ -255,7 +257,7 @@ public:
 			}
 			result.replace(result.size() - shapeSize, result.size(), "]");
 		}
-		
+
 		return result;
 	}
 
@@ -294,11 +296,11 @@ public:
 		{
 			throw invalid_argument("Argument axis is invalid value!");
 		}
-		
+
 		vector<int> newShape = { thisShape.front(), tsrShape.back() };
 		Tensor<T>* newTsr = new Tensor<T>(newShape);
 
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < thisShape.front(); i++)
 		{
 			for (int tsrI = 0; tsrI < tsrShape.back(); tsrI++)
@@ -329,7 +331,7 @@ public:
 		{
 			for (int j = 0; j < curShpae[1]; j++)
 			{
-				newTsr->operator[](j).operator[](i) 
+				newTsr->operator[](j).operator[](i)
 					= this->operator[](i).operator[](j);
 			}
 		}
@@ -351,15 +353,25 @@ public:
 		return m_childLink.size();
 	}
 
+	//Tensor<T> select(Tensor<T> thenTsr, Tensor<T> elseTsr)
+	//{
+	//	// 현재 이 인스턴스가 select 함수를 사용할 수 있는 bool 타입 Tensor 인지 확인
+	//	if (!std::is_same<T, bool>::value)
+	//		throw invalid_argument("The select() function only can use Tensor type bool.");
+
+	//	// 이 인스턴스와 인자값들에 shape이 같은지 확인
+
+	//}
+
 	/***************************************************/
 	/*                   operator                      */
 	/***************************************************/
-	Tensor<T>& operator[](const int n) 
+	Tensor<T>& operator[](const int n)
 	{
 		return *m_childLink[n];
 	}
 
-	Tensor<T>& operator[](const vector<int> idxs) 
+	Tensor<T>& operator[](const vector<int> idxs)
 	{
 		if (!idxs.empty())
 		{
@@ -369,7 +381,7 @@ public:
 		return *this;
 	}
 
-	Tensor<T>& operator=(const T n) 
+	Tensor<T>& operator=(const T n)
 	{
 		if (!m_childLink.empty())
 		{
@@ -420,3 +432,5 @@ ostream & operator<<(ostream & os, Tensor<NODETYPE>& tsr)
 {
 	return os << tsr.toString();
 }
+
+#endif // !TENSOR_H_

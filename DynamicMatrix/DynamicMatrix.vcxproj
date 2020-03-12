@@ -174,6 +174,7 @@
   <ItemGroup>
     <ClInclude Include="MatrixData.h" />
     <ClInclude Include="PerformaceTest.h" />
+    <ClInclude Include="Shape.h" />
     <ClInclude Include="Tensor.h" />
   </ItemGroup>
   <ItemGroup>
