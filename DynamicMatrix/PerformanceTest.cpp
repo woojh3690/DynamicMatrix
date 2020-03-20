@@ -58,7 +58,9 @@ void PerformanceTest::runTest()
 
 void PerformanceTest::matmulTest()
 {
-	Tensor<int> tensor1({ 64, 64 });
+	int temp = 10;
+
+	Tensor<int> tensor1({ temp, temp });
 	tensor1[0][0] = 1;
 	tensor1[0][1] = 2;
 
@@ -68,7 +70,7 @@ void PerformanceTest::matmulTest()
 	tensor1[2][0] = 5;
 	tensor1[2][1] = 6;
 
-	Tensor<int> tensor2({ 64, 64 });
+	Tensor<int> tensor2({ temp, temp });
 	tensor2[0][0] = 1;
 	tensor2[0][1] = 2;
 	tensor2[0][2] = 3;

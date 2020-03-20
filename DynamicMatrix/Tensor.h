@@ -69,25 +69,13 @@ public:
 
 	Tensor(vector<int> shape)
 	{
-		if (!shape.empty())
-		{
-			vector<int> child_shape(shape.begin() + 1, shape.end());
-			m_childLink.reserve(shape.front());
-			for (int i = 0; i < shape.front(); i++)
-			{
-				Tensor<T>* child_Tensor = new Tensor<T>(child_shape);
-				m_childLink.push_back(child_Tensor);
-			}
-		}
+		resize(shape);
 	}
 
-	Tensor(vector<int> shape, T initValue) : Tensor(shape)
+	Tensor(vector<int> shape, T initValue)
 	{
-		vector<int> curShape = this->shape();
-		for (int i = 0; i < this->volume(); i++)
-		{
-			this->operator[](changeIdxOfDim(i, curShape)) = initValue;
-		}
+		resize(shape);
+		fill(initValue);
 	}
 
 	Tensor(Tensor<T>& _Right)
@@ -214,6 +202,34 @@ public:
 			newTsr->operator[](changeIdxOfDim(i, newShape)) = value;
 		}
 		return *newTsr;
+	}
+
+	Tensor<T>& resize(vector<int> shape)
+	{
+		this->~Tensor();
+		if (!shape.empty())
+		{
+			vector<int> child_shape(shape.begin() + 1, shape.end());
+			m_childLink.reserve(shape.front());
+			for (int i = 0; i < shape.front(); i++)
+			{
+				Tensor<T>* child_Tensor = new Tensor<T>(child_shape);
+				m_childLink.push_back(child_Tensor);
+			}
+		}
+
+		return *this;
+	}
+
+	Tensor<T>& fill(T initValue)
+	{
+		vector<int> curShape = this->shape();
+		#pragma omp parallel for
+		for (int i = 0; i < this->volume(); i++)
+		{
+			this->operator[](changeIdxOfDim(i, curShape)) = initValue;
+		}
+		return *this;
 	}
 
 	Tensor<T>& slice(const int start)
@@ -393,6 +409,9 @@ public:
 		return *selectTsr;
 	}
 
+	/***************************************************/
+	/*                    연산자                        */
+	/***************************************************/
 	Tensor<double>& exp()
 	{
 		checkType<double>();
@@ -433,15 +452,29 @@ public:
 	{
 		checkType<double>();
 
-		vector<int> idx;
 		vector<int> curShape = this->shape();
 		Tensor<double>* expTsr = new Tensor<double>(curShape);
 		#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
-			idx = changeIdxOfDim(i, curShape);
+			vector<int> idx = changeIdxOfDim(i, curShape);
 			double value = this->operator[](idx);
 			double exp_value = std::pow(value, 2);
+			expTsr->operator[](idx) = exp_value;
+		}
+		return *expTsr;
+	}
+
+	Tensor<double>& sqrt()
+	{
+		vector<int> curShape = this->shape();
+		Tensor<double>* expTsr = new Tensor<double>(curShape);
+		#pragma omp parallel for
+		for (int i = 0; i < this->volume(); i++)
+		{
+			vector<int> idx = changeIdxOfDim(i, curShape);
+			double value = this->operator[](idx);
+			double exp_value = std::sqrt(value);
 			expTsr->operator[](idx) = exp_value;
 		}
 		return *expTsr;
@@ -509,7 +542,7 @@ public:
 		return this;
 	}
 
-	/*Tensor<double>& operator+(Tensor<T>& rTsr)
+	Tensor<double>& operator+(Tensor<T>& rTsr)
 	{
 		vector<int> curShape = this->shape();
 		vector<int> curOther(curShape.begin() + 1, curShape.end());
@@ -549,7 +582,7 @@ public:
 		}
 	
 		return *boolTsr;
-	}*/
+	}
 
 	MAKE_OPERATOR(>, bool);
 	MAKE_OPERATOR(<, bool);
@@ -557,7 +590,7 @@ public:
 	MAKE_OPERATOR(<=, bool);
 
 	MAKE_OPERATOR(-, double);	
-	MAKE_OPERATOR(+, double);
+	//MAKE_OPERATOR(+, double);
 	MAKE_OPERATOR(*, double);
 	MAKE_OPERATOR(/, double);
 
