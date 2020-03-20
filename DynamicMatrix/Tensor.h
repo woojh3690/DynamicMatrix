@@ -10,7 +10,7 @@
 #include <math.h>
 using namespace std;
 
-#define MAKE_OPERATOR(sign, returnType) \
+#define MAKE_RIGHT_OPERATOR(sign, returnType) \
 Tensor<##returnType##>& operator##sign##(Tensor<T>& rTsr) \
 { \
 	vector<int> curShape = this->shape(); \
@@ -84,7 +84,7 @@ public:
 	}
 
 	template <typename NODETYPE>
-	friend ostream& operator<<(ostream& os, Tensor<NODETYPE>& dt);
+	friend ostream& operator<<(ostream& os, Tensor<T>& dt);
 
 	~Tensor()
 	{
@@ -409,6 +409,11 @@ public:
 		return *selectTsr;
 	}
 
+	vector<int> changeIdxOfDim(int i)
+	{
+		return changeIdxOfDim(i, this->shape());
+	}
+
 	/***************************************************/
 	/*                    연산자                        */
 	/***************************************************/
@@ -537,11 +542,6 @@ public:
 		return m_value;
 	}
 
-	operator Tensor<T>()
-	{
-		return this;
-	}
-
 	Tensor<double>& operator+(Tensor<T>& rTsr)
 	{
 		vector<int> curShape = this->shape();
@@ -584,17 +584,21 @@ public:
 		return *boolTsr;
 	}
 
-	MAKE_OPERATOR(>, bool);
-	MAKE_OPERATOR(<, bool);
-	MAKE_OPERATOR(>=, bool);
-	MAKE_OPERATOR(<=, bool);
+	MAKE_RIGHT_OPERATOR(>, bool);
+	MAKE_RIGHT_OPERATOR(<, bool);
+	MAKE_RIGHT_OPERATOR(>=, bool);
+	MAKE_RIGHT_OPERATOR(<=, bool);
 
-	MAKE_OPERATOR(-, double);	
-	//MAKE_OPERATOR(+, double);
-	MAKE_OPERATOR(*, double);
-	MAKE_OPERATOR(/, double);
+	MAKE_RIGHT_OPERATOR(-, double);	
+	//MAKE_RIGHT_OPERATOR(+, double);
+	MAKE_RIGHT_OPERATOR(*, double);
+	MAKE_RIGHT_OPERATOR(/, double);
+	MAKE_RIGHT_OPERATOR(%, double);
 
-	MAKE_OPERATOR(%, double);
+	/*Tensor<double>& operator*(double a, Tensor<double>& rTsr)
+	{
+
+	}*/
 
 };
 
