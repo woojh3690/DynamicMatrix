@@ -58,24 +58,24 @@ void PerformanceTest::runTest()
 
 void PerformanceTest::matmulTest()
 {
-	Tensor<int> tensor1({ 64, 2 });
+	Tensor<int> tensor1({ 64, 64 });
 	tensor1[0][0] = 1;
 	tensor1[0][1] = 2;
-	tensor1[0][2] = 1;
-	tensor1[1][0] = 0;
-	tensor1[1][1] = 1;
-	tensor1[1][2] = 0;
-	tensor1[2][0] = 2;
-	tensor1[2][1] = 3;
-	tensor1[2][2] = 4;
 
-	Tensor<int> tensor2({ 2, 64 });
-	tensor2[0][0] = 2;
-	tensor2[0][1] = 5;
-	tensor2[1][0] = 6;
-	tensor2[1][1] = 7;
-	tensor2[2][0] = 1;
-	tensor2[2][1] = 8;
+	tensor1[1][0] = 3;
+	tensor1[1][1] = 4;
+
+	tensor1[2][0] = 5;
+	tensor1[2][1] = 6;
+
+	Tensor<int> tensor2({ 64, 64 });
+	tensor2[0][0] = 1;
+	tensor2[0][1] = 2;
+	tensor2[0][2] = 3;
+
+	tensor2[1][0] = 4;
+	tensor2[1][1] = 5;
+	tensor2[1][2] = 6;
 
 	cout << "--------------- matmul test ---------------" << endl;
 	clock_t start = clock();
@@ -160,5 +160,23 @@ void PerformanceTest::selectTest()
 	cout << result << endl;
 
 
+}
+
+void PerformanceTest::expTest()
+{
+	Tensor<double> a({ 3, 3 });
+	a[0][0] = 0;
+	a[0][1] = 1;
+	a[0][2] = 2;
+	a[1][0] = 3;
+	a[1][1] = 4;
+	a[1][2] = 5;
+	a[2][0] = 6;
+	a[2][1] = 7;
+	a[2][2] = 8;
+
+	cout << a << endl << endl;
+
+	cout << a.exp() << endl;
 }
 

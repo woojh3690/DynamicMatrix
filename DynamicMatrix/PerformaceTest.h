@@ -14,4 +14,5 @@ public:
 	void copyRun();
 	void compareTest();
 	void selectTest();
+	void expTest();
 };

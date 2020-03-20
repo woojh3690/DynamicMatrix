@@ -7,31 +7,44 @@
 #include <string>
 #include <omp.h>
 #include <Windows.h>
+#include <math.h>
 using namespace std;
 
 #define MAKE_OPERATOR(sign, returnType) \
-Tensor<##returnType##>& operator##sign##(Tensor<T>& compare) \
+Tensor<##returnType##>& operator##sign##(Tensor<T>& rTsr) \
 { \
-	if (compare.size() == 1) \
+	vector<int> curShape = this->shape(); \
+	vector<int> curOther(curShape.begin() + 1, curShape.end()); \
+	Tensor<T> reshaped; \
+	if (rTsr.size() == 1) \
 	{ \
-		Tensor<double> a(this->shape(), compare.operator[](0)); \
-		compare = a; \
+		Tensor<T> temp(curShape, rTsr.operator[](0)); \
+		reshaped = temp; \
 	} \
-	else if (compare.size() != this->size()) \
+	else if (curOther == rTsr.shape()) \
+	{ \
+		for (int i = 0; i < curShape[0]; i++) \
+		{ \
+			reshaped.append(rTsr); \
+		} \
+	} \
+	else if (rTsr.size() != this->size()) \
 	{ \
 		throw invalid_argument("RValue size must be (1) or " + \
 			this->strShape() + "shape."); \
 	} \
+	else \
+	{ \
+		reshaped = rTsr; \
+	} \
  \
-	Tensor<##returnType##>* boolTsr = new Tensor<##returnType##>(compare.shape()); \
- \
-	vector<int> curShape = this->shape(); \
+	Tensor<##returnType##>* boolTsr = new Tensor<##returnType##>(reshaped.shape()); \
 	vector<int> idx; \
 	for (int i = 0; i < this->volume(); i++) \
 	{ \
 		idx = changeIdxOfDim(i, curShape); \
 		T curValue = this->operator[](idx); \
-		T compareValue = compare[idx]; \
+		T compareValue = reshaped[idx]; \
 		##returnType boolValue = curValue ##sign## compareValue; \
 		boolTsr->operator[](idx) = boolValue; \
 	} \
@@ -117,6 +130,14 @@ private:
 
 		std::reverse(matrixIdx.begin(), matrixIdx.end());
 		return matrixIdx;
+	}
+
+	template<typename check_T>
+	void checkType()
+	{
+		if (!std::is_same<T, check_T>::value)
+			throw invalid_argument("The select() function only can use when \
+				Tensor type is check_T.");
 	}
 
 public:
@@ -263,13 +284,7 @@ public:
 
 	string strShape()
 	{
-		string header = "(";
-		for (auto idx : this->shape())
-		{
-			header += to_string(idx) + ", ";
-		}
-		header.replace(header.size() - 2, header.size(), ")");
-		return header;
+		return strShape(this->shape());
 	}
 
 	string strShape(vector<int> shape)
@@ -297,9 +312,7 @@ public:
 			throw invalid_argument("Argument axis is invalid value!");
 		}
 
-		vector<int> newShape = { thisShape.front(), tsrShape.back() };
-		Tensor<T>* newTsr = new Tensor<T>(newShape);
-
+		Tensor<T>* newTsr = new Tensor<T>({ thisShape.front(), tsrShape.back() });
 		#pragma omp parallel for
 		for (int i = 0; i < thisShape.front(); i++)
 		{
@@ -348,7 +361,7 @@ public:
 		return indexLen;
 	}
 
-	int size()
+	size_t size()
 	{
 		return m_childLink.size();
 	}
@@ -357,9 +370,7 @@ public:
 	Tensor<selectDerived>& select(Tensor<selectDerived> thenTsr, Tensor<selectDerived> elseTsr)
 	{
 		vector<int> curShape = this->shape();
-
-		if (!std::is_same<T, bool>::value)
-			throw invalid_argument("The select() function only can use Tensor type bool.");
+		checkType<bool>();
 
 		// 이 인스턴스와 인자값들에 shape이 같은지 확인
 		if ((curShape != thenTsr.shape()) || (curShape != elseTsr.shape()))
@@ -374,16 +385,66 @@ public:
 			vector<int> idx = changeIdxOfDim(i, curShape);
 			T boolValue = this->operator[](idx);
 			if (boolValue)
-			{
 				selectTsr->operator[](idx) = thenTsr[idx];
-			}
 			else
-			{
 				selectTsr->operator[](idx) = elseTsr[idx];
-			}
 		}
 
 		return *selectTsr;
+	}
+
+	Tensor<double>& exp()
+	{
+		checkType<double>();
+		vector<int> curShape = this->shape();
+		Tensor<double>* expTsr = new Tensor<double>(curShape);
+		#pragma omp parallel for
+		for (int i = 0; i < this->volume(); i++)
+		{
+			vector<int> idx = changeIdxOfDim(i, curShape);
+			double value = this->operator[](idx);
+			double exp_value = std::exp(value);
+			expTsr->operator[](idx) = exp_value;
+		}
+		return *expTsr;
+	}
+
+	Tensor<double>& sum()
+	{
+		checkType<double>();
+
+		Tensor<double> *sumTsr = new Tensor<double>(this->shape(), 0);
+		for (int i = 0; i < this->size(); i++)
+		{
+			sumTsr = &sumTsr->operator+(this->operator[](i));
+		}
+		return *sumTsr;
+	}
+
+	Tensor<double>& mean()
+	{
+		checkType<double>();
+		Tensor<double> volTsr;
+		volTsr.append(this->volume());
+		return sum() / volTsr;
+	}
+
+	Tensor<double>& pow()
+	{
+		checkType<double>();
+
+		vector<int> idx;
+		vector<int> curShape = this->shape();
+		Tensor<double>* expTsr = new Tensor<double>(curShape);
+		#pragma omp parallel for
+		for (int i = 0; i < this->volume(); i++)
+		{
+			idx = changeIdxOfDim(i, curShape);
+			double value = this->operator[](idx);
+			double exp_value = std::pow(value, 2);
+			expTsr->operator[](idx) = exp_value;
+		}
+		return *expTsr;
 	}
 
 	/***************************************************/
@@ -433,18 +494,6 @@ public:
 		return *this;
 	}
 
-	MAKE_OPERATOR(>, bool);
-	MAKE_OPERATOR(<, bool);
-	MAKE_OPERATOR(>=, bool);
-	MAKE_OPERATOR(<=, bool);
-
-	MAKE_OPERATOR(-, double);	
-	MAKE_OPERATOR(+, double);
-	MAKE_OPERATOR(*, double);
-	MAKE_OPERATOR(/ , double);
-
-	MAKE_OPERATOR(%, double);
-
 	operator T()
 	{
 		if (!m_childLink.empty())
@@ -454,6 +503,65 @@ public:
 
 		return m_value;
 	}
+
+	operator Tensor<T>()
+	{
+		return this;
+	}
+
+	/*Tensor<double>& operator+(Tensor<T>& rTsr)
+	{
+		vector<int> curShape = this->shape();
+		vector<int> curOther(curShape.begin() + 1, curShape.end());
+
+		Tensor<T> reshaped;
+		if (rTsr.size() == 1)
+		{
+			Tensor<T> temp(curShape, rTsr.operator[](0));
+			reshaped = temp;
+		}
+		else if (curOther == rTsr.shape())
+		{
+			for (int i = 0; i < curShape[0]; i++)
+			{
+				reshaped.append(rTsr);
+			}
+		}
+		else if (curShape != rTsr.shape())
+		{
+			throw invalid_argument("RValue size must be (1) or " +
+				this->strShape() + "shape.");
+		}
+		else
+		{
+			reshaped = rTsr;
+		}
+	
+		Tensor<double>* boolTsr = new Tensor<double>(reshaped.shape());
+		vector<int> idx;
+		for (int i = 0; i < this->volume(); i++)
+		{
+			idx = changeIdxOfDim(i, curShape);
+			T curValue = this->operator[](idx);
+			T compareValue = reshaped[idx];
+			double boolValue = curValue + compareValue;
+			boolTsr->operator[](idx) = boolValue;
+		}
+	
+		return *boolTsr;
+	}*/
+
+	MAKE_OPERATOR(>, bool);
+	MAKE_OPERATOR(<, bool);
+	MAKE_OPERATOR(>=, bool);
+	MAKE_OPERATOR(<=, bool);
+
+	MAKE_OPERATOR(-, double);	
+	MAKE_OPERATOR(+, double);
+	MAKE_OPERATOR(*, double);
+	MAKE_OPERATOR(/, double);
+
+	MAKE_OPERATOR(%, double);
 
 };
 

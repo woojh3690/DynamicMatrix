@@ -8,7 +8,7 @@ using namespace std;
 int main()
 {
 	PerformanceTest test;
-	test.selectTest();
+	test.expTest();
 
 	printf("end");
 } 
