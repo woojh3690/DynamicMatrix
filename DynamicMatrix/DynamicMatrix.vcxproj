@@ -173,6 +173,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="MatrixData.h" />
+    <ClInclude Include="OperatorMacro.h" />
     <ClInclude Include="PerformaceTest.h" />
     <ClInclude Include="Tensor.h" />
   </ItemGroup>

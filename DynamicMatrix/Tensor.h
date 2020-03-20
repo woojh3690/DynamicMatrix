@@ -1,56 +1,14 @@
-﻿#ifndef TENSOR_H_
-#define TENSOR_H_
+﻿#ifndef _TENSOR_H_
+#define _TENSOR_H_
 
 #include <vector>
 #include <iostream>
 #include <algorithm>
 #include <string>
 #include <omp.h>
-#include <Windows.h>
 #include <math.h>
+#include "OperatorMacro.h"
 using namespace std;
-
-#define MAKE_RIGHT_OPERATOR(sign, returnType) \
-Tensor<##returnType##>& operator##sign##(Tensor<T>& rTsr) \
-{ \
-	vector<int> curShape = this->shape(); \
-	vector<int> curOther(curShape.begin() + 1, curShape.end()); \
-	Tensor<T> reshaped; \
-	if (rTsr.size() == 1) \
-	{ \
-		Tensor<T> temp(curShape, rTsr.operator[](0)); \
-		reshaped = temp; \
-	} \
-	else if (curOther == rTsr.shape()) \
-	{ \
-		for (int i = 0; i < curShape[0]; i++) \
-		{ \
-			reshaped.append(rTsr); \
-		} \
-	} \
-	else if (rTsr.size() != this->size()) \
-	{ \
-		throw invalid_argument("RValue size must be (1) or " + \
-			this->strShape() + "shape."); \
-	} \
-	else \
-	{ \
-		reshaped = rTsr; \
-	} \
- \
-	Tensor<##returnType##>* boolTsr = new Tensor<##returnType##>(reshaped.shape()); \
-	vector<int> idx; \
-	for (int i = 0; i < this->volume(); i++) \
-	{ \
-		idx = changeIdxOfDim(i, curShape); \
-		T curValue = this->operator[](idx); \
-		T compareValue = reshaped[idx]; \
-		##returnType boolValue = curValue ##sign## compareValue; \
-		boolTsr->operator[](idx) = boolValue; \
-	} \
- \
-	return *boolTsr; \
-}
 
 template <typename T>
 class Tensor
@@ -85,6 +43,18 @@ public:
 
 	template <typename NODETYPE>
 	friend ostream& operator<<(ostream& os, Tensor<T>& dt);
+
+	friend auto& operator>(Tensor<double>& lTsr, double value);
+	friend auto& operator>(double value, Tensor<double>& lTsr);
+
+	DEFINE_OPERATOR(<)
+	DEFINE_OPERATOR(>=)
+	DEFINE_OPERATOR(<=)
+
+	DEFINE_OPERATOR(-)
+	DEFINE_OPERATOR(+)
+	DEFINE_OPERATOR(*)
+	DEFINE_OPERATOR(/)
 
 	~Tensor()
 	{
@@ -584,28 +554,52 @@ public:
 		return *boolTsr;
 	}
 
-	MAKE_RIGHT_OPERATOR(>, bool);
-	MAKE_RIGHT_OPERATOR(<, bool);
-	MAKE_RIGHT_OPERATOR(>=, bool);
-	MAKE_RIGHT_OPERATOR(<=, bool);
-
-	MAKE_RIGHT_OPERATOR(-, double);	
-	//MAKE_RIGHT_OPERATOR(+, double);
-	MAKE_RIGHT_OPERATOR(*, double);
-	MAKE_RIGHT_OPERATOR(/, double);
-	MAKE_RIGHT_OPERATOR(%, double);
-
-	/*Tensor<double>& operator*(double a, Tensor<double>& rTsr)
-	{
-
-	}*/
-
 };
 
 template <typename NODETYPE>
-ostream & operator<<(ostream & os, Tensor<NODETYPE>& tsr)
+ostream & operator<<(ostream& os, Tensor<NODETYPE>& tsr)
 {
 	return os << tsr.toString();
 }
+
+auto& operator>(Tensor<double>& lTsr, double value) \
+{ \
+	double a = 0.1; \
+	double b = 0.1; \
+	auto temp = a > b; \
+	Tensor<decltype(temp)>* result = new Tensor<decltype(temp)>(lTsr.shape()); \
+	for (int i = 0; i < lTsr.volume(); i++) \
+	{ \
+		vector<int> idx = lTsr.changeIdxOfDim(i); \
+		double tsrValue = lTsr.operator[](idx); \
+		result->operator[](idx) = tsrValue > value; \
+	} \
+	return *result; \
+}
+
+auto& operator>(double value, Tensor<double>& lTsr) \
+{ \
+	double a = 0.1; \
+	double b = 0.1; \
+	auto temp = a > b; \
+	Tensor<decltype(temp)>* result = new Tensor<decltype(temp)>(lTsr.shape()); \
+	for (int i = 0; i < lTsr.volume(); i++) \
+	{ \
+		vector<int> idx = lTsr.changeIdxOfDim(i); \
+		double tsrValue = lTsr.operator[](idx); \
+		result->operator[](idx) = value > tsrValue; \
+	} \
+	return *result; \
+}
+
+/*MAKE_OPERATOR(>);*/
+MAKE_OPERATOR(<)
+MAKE_OPERATOR(>=)
+MAKE_OPERATOR(<=)
+
+MAKE_OPERATOR(-)
+MAKE_OPERATOR(+)
+MAKE_OPERATOR(*)
+MAKE_OPERATOR(/)
 
 #endif // !TENSOR_H_
