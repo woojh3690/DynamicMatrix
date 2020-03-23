@@ -523,49 +523,6 @@ public:
 
 		return m_value;
 	}*/
-
-	Tensor<double>& operator+(Tensor<T>& rTsr)
-	{
-		vector<int> curShape = this->shape();
-		vector<int> curOther(curShape.begin() + 1, curShape.end());
-
-		Tensor<T> reshaped;
-		if (rTsr.size() == 1)
-		{
-			Tensor<T> temp(curShape, rTsr.operator[](0));
-			reshaped = temp;
-		}
-		else if (curOther == rTsr.shape())
-		{
-			for (int i = 0; i < curShape[0]; i++)
-			{
-				reshaped.append(rTsr);
-			}
-		}
-		else if (curShape != rTsr.shape())
-		{
-			throw invalid_argument("RValue size must be (1) or " +
-				this->strShape() + "shape.");
-		}
-		else
-		{
-			reshaped = rTsr;
-		}
-	
-		Tensor<double>* boolTsr = new Tensor<double>(reshaped.shape());
-		vector<int> idx;
-		for (int i = 0; i < this->volume(); i++)
-		{
-			idx = changeIdxOfDim(i, curShape);
-			T curValue = this->operator[](idx).value();
-			T compareValue = reshaped.operator[](idx).value();
-			double boolValue = curValue + compareValue;
-			boolTsr->operator[](idx) = boolValue;
-		}
-	
-		return *boolTsr;
-	}
-
 };
 
 template <typename NODETYPE>
