@@ -44,9 +44,11 @@ public:
 	template <typename NODETYPE>
 	friend ostream& operator<<(ostream& os, Tensor<T>& dt);
 
+	/*friend auto& operator>(Tensor<double>& lTsr, Tensor<double>& rTsr);
 	friend auto& operator>(Tensor<double>& lTsr, double value);
-	friend auto& operator>(double value, Tensor<double>& lTsr);
+	friend auto& operator>(double value, Tensor<double>& lTsr);*/
 
+	DEFINE_OPERATOR(>)
 	DEFINE_OPERATOR(<)
 	DEFINE_OPERATOR(>=)
 	DEFINE_OPERATOR(<=)
@@ -168,7 +170,7 @@ public:
 		vector<int> curShape = this->shape();
 		for (int i = 0; i < curVolume; i++)
 		{
-			T value = this->operator[](changeIdxOfDim(i, curShape));
+			T value = this->operator[](changeIdxOfDim(i, curShape)).value();
 			newTsr->operator[](changeIdxOfDim(i, newShape)) = value;
 		}
 		return *newTsr;
@@ -307,8 +309,8 @@ public:
 				T newVal = 0;
 				for (int j = 0; j < thisShape.back(); j++)
 				{
-					T thisVal = this->operator[](i).operator[](j);
-					T tsrVal = tsr[j][tsrI];
+					T thisVal = this->operator[](i).operator[](j).value();
+					T tsrVal = tsr.operator[](j).operator[](tsrI).value();
 					newVal += thisVal * tsrVal;
 				}
 				newTsr->operator[](i).operator[](tsrI) = newVal;
@@ -382,6 +384,16 @@ public:
 	vector<int> changeIdxOfDim(int i)
 	{
 		return changeIdxOfDim(i, this->shape());
+	}
+
+	T value()
+	{
+		if (!m_childLink.empty())
+		{
+			throw invalid_argument("Tensor can't cast to Rvalue.");
+		}
+
+		return m_value;
 	}
 
 	/***************************************************/
@@ -502,7 +514,7 @@ public:
 		return *this;
 	}
 
-	operator T()
+	/*operator T()
 	{
 		if (!m_childLink.empty())
 		{
@@ -510,7 +522,7 @@ public:
 		}
 
 		return m_value;
-	}
+	}*/
 
 	Tensor<double>& operator+(Tensor<T>& rTsr)
 	{
@@ -545,8 +557,8 @@ public:
 		for (int i = 0; i < this->volume(); i++)
 		{
 			idx = changeIdxOfDim(i, curShape);
-			T curValue = this->operator[](idx);
-			T compareValue = reshaped[idx];
+			T curValue = this->operator[](idx).value();
+			T compareValue = reshaped.operator[](idx).value();
 			double boolValue = curValue + compareValue;
 			boolTsr->operator[](idx) = boolValue;
 		}
@@ -562,37 +574,37 @@ ostream & operator<<(ostream& os, Tensor<NODETYPE>& tsr)
 	return os << tsr.toString();
 }
 
-auto& operator>(Tensor<double>& lTsr, double value) \
-{ \
-	double a = 0.1; \
-	double b = 0.1; \
-	auto temp = a > b; \
-	Tensor<decltype(temp)>* result = new Tensor<decltype(temp)>(lTsr.shape()); \
-	for (int i = 0; i < lTsr.volume(); i++) \
-	{ \
-		vector<int> idx = lTsr.changeIdxOfDim(i); \
-		double tsrValue = lTsr.operator[](idx); \
-		result->operator[](idx) = tsrValue > value; \
-	} \
-	return *result; \
-}
+//auto& operator>(Tensor<double>& lTsr, double value) \
+//{ \
+//	double a = 0.1; \
+//	double b = 0.1; \
+//	auto temp = a > b; \
+//	Tensor<decltype(temp)>* result = new Tensor<decltype(temp)>(lTsr.shape()); \
+//	for (int i = 0; i < lTsr.volume(); i++) \
+//	{ \
+//		vector<int> idx = lTsr.changeIdxOfDim(i); \
+//		double tsrValue = lTsr.operator[](idx).value(); \
+//		result->operator[](idx) = tsrValue > value; \
+//	} \
+//	return *result; \
+//}
+//
+//auto& operator>(double value, Tensor<double>& lTsr) \
+//{ \
+//	double a = 0.1; \
+//	double b = 0.1; \
+//	auto temp = a > b; \
+//	Tensor<decltype(temp)>* result = new Tensor<decltype(temp)>(lTsr.shape()); \
+//	for (int i = 0; i < lTsr.volume(); i++) \
+//	{ \
+//		vector<int> idx = lTsr.changeIdxOfDim(i); \
+//		double tsrValue = lTsr.operator[](idx).value(); \
+//		result->operator[](idx) = value > tsrValue; \
+//	} \
+//	return *result; \
+//}
 
-auto& operator>(double value, Tensor<double>& lTsr) \
-{ \
-	double a = 0.1; \
-	double b = 0.1; \
-	auto temp = a > b; \
-	Tensor<decltype(temp)>* result = new Tensor<decltype(temp)>(lTsr.shape()); \
-	for (int i = 0; i < lTsr.volume(); i++) \
-	{ \
-		vector<int> idx = lTsr.changeIdxOfDim(i); \
-		double tsrValue = lTsr.operator[](idx); \
-		result->operator[](idx) = value > tsrValue; \
-	} \
-	return *result; \
-}
-
-/*MAKE_OPERATOR(>);*/
+MAKE_OPERATOR(>);
 MAKE_OPERATOR(<)
 MAKE_OPERATOR(>=)
 MAKE_OPERATOR(<=)
