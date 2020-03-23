@@ -4,10 +4,14 @@
 #define MAKE_TENSOR_OPERATOR(METHOD) \
 auto& operator##METHOD##(Tensor<double>& lTsr, Tensor<double>& rTsr) \
 { \
-	double a = 0.1; \
-	double b = 0.1; \
-	auto temp = a ##METHOD## b; \
-	Tensor<decltype(temp)>* result = new Tensor<decltype(temp)>(lTsr.shape()); \
+	auto type = 0.1 ##METHOD## 0.1; \
+ \
+	if (lTsr.shape() != rTsr.shape()) \
+	{ \
+		rTsr = rTsr.broadcasting(lTsr.shape()); \
+	} \
+ \
+	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
 	for (int i = 0; i < lTsr.volume(); i++) \
 	{ \
 		vector<int> idx = lTsr.changeIdxOfDim(i); \
@@ -21,10 +25,8 @@ auto& operator##METHOD##(Tensor<double>& lTsr, Tensor<double>& rTsr) \
 #define MAKE_RIGHT_OPERATOR_DOUBLE(METHOD) \
 auto& operator##METHOD##(Tensor<double>& lTsr, double value) \
 { \
-	double a = 0.1; \
-	double b = 0.1; \
-	auto temp = a ##METHOD## b; \
-	Tensor<decltype(temp)>* result = new Tensor<decltype(temp)>(lTsr.shape()); \
+	auto type = 0.1 ##METHOD## 0.1; \
+	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
 	for (int i = 0; i < lTsr.volume(); i++) \
 	{ \
 		vector<int> idx = lTsr.changeIdxOfDim(i); \
@@ -37,10 +39,8 @@ auto& operator##METHOD##(Tensor<double>& lTsr, double value) \
 #define MAKE_LEFT_OPERATOR_DOUBLE(METHOD) \
 auto& operator##METHOD##(double value, Tensor<double>& lTsr) \
 { \
-	double a = 0.1; \
-	double b = 0.1; \
-	auto temp = a ##METHOD## b; \
-	Tensor<decltype(temp)>* result = new Tensor<decltype(temp)>(lTsr.shape()); \
+	auto type = 0.1 ##METHOD## 0.1; \
+	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
 	for (int i = 0; i < lTsr.volume(); i++) \
 	{ \
 		vector<int> idx = lTsr.changeIdxOfDim(i); \
