@@ -2,12 +2,12 @@
 #define _TENSOR_OPERATORMACRO_H_
 
 #define DEFINE_OPERATOR(METHOD) \
-friend auto& operator##METHOD##(Tensor<double> lTsr, Tensor<double> rTsr); \
-friend auto& operator##METHOD##(Tensor<double>& lTsr, double value); \
-friend auto& operator##METHOD##(double value, Tensor<double>& lTsr); \
+friend auto& operator##METHOD##(const Tensor<double>& lTsr, const double value); \
+friend auto& operator##METHOD##(const double value, const Tensor<double>& lTsr); \
+friend auto& operator##METHOD##(const Tensor<double>& lTsr, const Tensor<double>& rTsr); \
 
 #define MAKE_RIGHT_OPERATOR_DOUBLE(METHOD) \
-auto& operator##METHOD##(Tensor<double>& lTsr, double value) \
+auto& operator##METHOD##(const Tensor<double>& lTsr, const double value) \
 { \
 	auto type = 0.1 ##METHOD## 0.1; \
 	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
@@ -21,7 +21,7 @@ auto& operator##METHOD##(Tensor<double>& lTsr, double value) \
 }
 
 #define MAKE_LEFT_OPERATOR_DOUBLE(METHOD) \
-auto& operator##METHOD##(double value, Tensor<double>& lTsr) \
+auto& operator##METHOD##(const double value, const Tensor<double>& lTsr) \
 { \
 	auto type = 0.1 ##METHOD## 0.1; \
 	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
@@ -35,13 +35,15 @@ auto& operator##METHOD##(double value, Tensor<double>& lTsr) \
 }
 
 #define MAKE_TENSOR_OPERATOR(METHOD) \
-auto& operator##METHOD##(Tensor<double> lTsr, Tensor<double> rTsr) \
+auto& operator##METHOD##(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
 { \
 	vector<int> lShape = lTsr.shape(); \
 	vector<int> rShape = rTsr.shape(); \
+	Tensor<double> newlTsr; \
+	Tensor<double> newrTsr; \
 	if (lShape != rShape) \
 	{ \
-		if (lShape == vector<int>({1})) \
+		if (lShape == vector<int>({ 1 })) \
 		{ \
 			return operator##METHOD##(lTsr[0].value(), rTsr); \
 		} \
@@ -51,21 +53,28 @@ auto& operator##METHOD##(Tensor<double> lTsr, Tensor<double> rTsr) \
 		} \
 		else if (lShape.size() > rShape.size()) \
 		{ \
-			rTsr = rTsr.broadcasting(lShape); \
+			newrTsr = rTsr.broadcasting(lShape); \
+			newlTsr = lTsr; \
 		} \
 		else if (lShape.size() < rShape.size())\
 		{ \
-			lTsr = lTsr.broadcasting(rShape); \
+			newlTsr = lTsr.broadcasting(rShape); \
+			newrTsr = rTsr; \
 		} \
+	} \
+	else \
+	{ \
+		newlTsr = lTsr; \
+		newrTsr = rTsr; \
 	} \
  \
 	auto type = 0.1 ##METHOD## 0.1; \
-	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
-	for (int i = 0; i < lTsr.volume(); i++) \
+	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(newlTsr.shape()); \
+	for (int i = 0; i < newlTsr.volume(); i++) \
 	{ \
-		vector<int> idx = lTsr.changeIdxOfDim(i); \
-		double tsrValue = lTsr.operator[](idx).value(); \
-		double value = rTsr.operator[](idx).value(); \
+		vector<int> idx = newlTsr.changeIdxOfDim(i); \
+		double tsrValue = newlTsr.operator[](idx).value(); \
+		double value = newrTsr.operator[](idx).value(); \
 		result->operator[](idx) = tsrValue ##METHOD## value; \
 	} \
 	return *result; \

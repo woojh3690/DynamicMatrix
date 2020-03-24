@@ -36,7 +36,7 @@ public:
 		fill(initValue);
 	}
 
-	Tensor(Tensor<T>& _Right)
+	Tensor(const Tensor<T>& _Right)
 	{
 		this->operator=(_Right);
 	}
@@ -66,7 +66,7 @@ private:
 	vector<Tensor<T>*> m_childLink;
 	T m_value;
 
-	vector<int> changeIdxOfDim(int index, vector<int> fomatShape)
+	vector<int> changeIdxOfDim(int index, vector<int> fomatShape) const
 	{
 		std::reverse(fomatShape.begin(), fomatShape.end());
 
@@ -89,7 +89,7 @@ private:
 	}
 
 	template<typename check_T>
-	void checkType()
+	void checkType() const
 	{
 		if (!std::is_same<T, check_T>::value)
 			throw invalid_argument("The select() function only can use when \
@@ -106,7 +106,7 @@ public:
 		concatenate(item, 0);
 	}
 
-	void append(Tensor<T>& tsr)
+	void append(const Tensor<T>& tsr)
 	{
 		Tensor<T>* newTsr = new Tensor<T>(tsr);
 		m_childLink.push_back(newTsr);
@@ -200,12 +200,12 @@ public:
 		return *this;
 	}
 
-	Tensor<T>& slice(const int start)
+	Tensor<T>& slice(const int start) const
 	{
 		return slice(start, m_childLink.size());
 	}
 
-	Tensor<T>& slice(const int start, const int end)
+	Tensor<T>& slice(const int start, const int end) const
 	{
 		Tensor<T>* newTsr = new Tensor<T>;
 
@@ -224,7 +224,7 @@ public:
 		m_childLink.erase(m_childLink.begin() + index);
 	}
 
-	vector<int> shape()
+	vector<int> shape() const
 	{
 		if (m_childLink.empty())
 		{
@@ -236,7 +236,7 @@ public:
 		return curShape;
 	}
 
-	string toString()
+	string toString() const
 	{
 		string result = "[";
 		int shapeSize = (int)this->shape().size();
@@ -266,12 +266,12 @@ public:
 		return result;
 	}
 
-	string strShape()
+	string strShape() const
 	{
 		return strShape(this->shape());
 	}
 
-	string strShape(vector<int> shape)
+	string strShape(vector<int> shape) const
 	{
 		string header = "(";
 		for (auto idx : shape)
@@ -282,7 +282,7 @@ public:
 		return header;
 	}
 
-	Tensor<T>& matmul(Tensor<T>& tsr)
+	Tensor<T>& matmul(Tensor<T>& tsr) const
 	{
 		vector<int> thisShape = this->shape();
 		vector<int> tsrShape = tsr.shape();
@@ -337,7 +337,7 @@ public:
 		return *this;
 	}
 
-	int volume()
+	int volume() const
 	{
 		int indexLen = 1;
 		for (auto size : this->shape())
@@ -345,7 +345,7 @@ public:
 		return indexLen;
 	}
 
-	size_t size()
+	size_t size() const
 	{
 		return m_childLink.size();
 	}
@@ -377,12 +377,12 @@ public:
 		return *selectTsr;
 	}
 
-	vector<int> changeIdxOfDim(int i)
+	vector<int> changeIdxOfDim(int i) const
 	{
 		return changeIdxOfDim(i, this->shape());
 	}
 
-	T value()
+	T value() const
 	{
 		if (!m_childLink.empty())
 		{
@@ -392,7 +392,7 @@ public:
 		return m_value;
 	}
 
-	Tensor<T>& broadcasting(vector<int> shape)
+	Tensor<T>& broadcasting(vector<int> shape) const
 	{
 		vector<int> curShape = this->shape();
 		vector<int> childShape(shape.begin() + 1, shape.end());
@@ -414,7 +414,7 @@ public:
 	/***************************************************/
 	/*                    연산자                       */
 	/***************************************************/
-	Tensor<double>& exp()
+	Tensor<double>& exp() const
 	{
 		checkType<double>();
 		vector<int> curShape = this->shape();
@@ -430,7 +430,7 @@ public:
 		return *expTsr;
 	}
 
-	Tensor<double>& sum()
+	Tensor<double>& sum() const
 	{
 		checkType<double>();
 
@@ -443,13 +443,13 @@ public:
 		return *sumTsr;
 	}
 
-	Tensor<double>& mean()
+	Tensor<double>& mean() const
 	{
 		checkType<double>();
 		return sum() / this->volume();
 	}
 
-	Tensor<double>& pow()
+	Tensor<double>& pow() const
 	{
 		checkType<double>();
 
@@ -466,7 +466,7 @@ public:
 		return *expTsr;
 	}
 
-	Tensor<double>& sqrt()
+	Tensor<double>& sqrt() const
 	{
 		vector<int> curShape = this->shape();
 		Tensor<double>* expTsr = new Tensor<double>(curShape);
@@ -499,6 +499,21 @@ public:
 		return *this;
 	}
 
+	const Tensor<T>& operator[](const int n) const
+	{
+		return *m_childLink[n];
+	}
+
+	const Tensor<T>& operator[](const vector<int> idxs) const
+	{
+		if (!idxs.empty())
+		{
+			vector<int> child_idxs(idxs.begin() + 1, idxs.end());
+			return m_childLink[idxs.front()]->operator[](child_idxs);
+		}
+		return *this;
+	}
+
 	Tensor<T>& operator=(const T n)
 	{
 		if (!m_childLink.empty())
@@ -509,7 +524,7 @@ public:
 		return *this;
 	}
 
-	Tensor<T>& operator=(Tensor<T>& tsr)
+	Tensor<T>& operator=(const Tensor<T>& tsr)
 	{
 		this->~Tensor();
 		vector<int> rShape = tsr.shape();
@@ -534,6 +549,77 @@ ostream & operator<<(ostream& os, Tensor<NODETYPE>& tsr)
 {
 	return os << tsr.toString();
 }
+
+//auto& operator*(const Tensor<double>& lTsr, const double value) \
+//{ \
+//	auto type = 0.1 * 0.1; \
+//	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
+//	for (int i = 0; i < lTsr.volume(); i++) \
+//	{ \
+//		vector<int> idx = lTsr.changeIdxOfDim(i); \
+//		double tsrValue = lTsr.operator[](idx).value(); \
+//		result->operator[](idx) = tsrValue * value; \
+//	} \
+//	return *result; \
+//}
+//
+//auto& operator*(const double value, const Tensor<double>& lTsr) \
+//{ \
+//	auto type = 0.1 * 0.1; \
+//	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
+//	for (int i = 0; i < lTsr.volume(); i++) \
+//	{ \
+//		vector<int> idx = lTsr.changeIdxOfDim(i); \
+//		double tsrValue = lTsr.operator[](idx).value(); \
+//		result->operator[](idx) = value * tsrValue; \
+//	} \
+//	return *result; \
+//}
+//
+//auto& operator*(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
+//{ \
+//	vector<int> lShape = lTsr.shape(); \
+//	vector<int> rShape = rTsr.shape(); \
+//	Tensor<double> newlTsr; \
+//	Tensor<double> newrTsr; \
+//	if (lShape != rShape) \
+//	{ \
+//		if (lShape == vector<int>({ 1 })) \
+//		{ \
+//			return operator*(lTsr[0].value(), rTsr); \
+//		} \
+//		else if (rShape == vector<int>({ 1 })) \
+//		{ \
+//			return operator*(lTsr, rTsr[0].value()); \
+//		} \
+//		else if (lShape.size() > rShape.size()) \
+//		{ \
+//			newrTsr = rTsr.broadcasting(lShape); \
+//			newlTsr = lTsr; \
+//		} \
+//		else if (lShape.size() < rShape.size())\
+//		{ \
+//			newlTsr = lTsr.broadcasting(rShape); \
+//			newrTsr = rTsr; \
+//		} \
+//	} \
+//	else \
+//	{ \
+//		newlTsr = lTsr; \
+//		newrTsr = rTsr; \
+//	} \
+// \
+//	auto type = 0.1 * 0.1; \
+//	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(newlTsr.shape()); \
+//	for (int i = 0; i < newlTsr.volume(); i++) \
+//	{ \
+//		vector<int> idx = newlTsr.changeIdxOfDim(i); \
+//		double tsrValue = newlTsr.operator[](idx).value(); \
+//		double value = newrTsr.operator[](idx).value(); \
+//		result->operator[](idx) = tsrValue * value; \
+//	} \
+//	return *result; \
+//}
 
 MAKE_OPERATOR(>)
 MAKE_OPERATOR(<)
