@@ -315,7 +315,7 @@ public:
 		return *newTsr;
 	}
 
-	Tensor<T>& transpose()
+	Tensor<T>& transpose() const
 	{
 		vector<int> curShpae = this->shape();
 
@@ -328,13 +328,10 @@ public:
 		{
 			for (int j = 0; j < curShpae[1]; j++)
 			{
-				newTsr->operator[](j).operator[](i)
-					= this->operator[](i).operator[](j);
+				newTsr->operator[](j)[i] = this->operator[](i)[j];
 			}
 		}
-		this->~Tensor();
-		this->m_childLink = newTsr->m_childLink;
-		return *this;
+		return *newTsr;
 	}
 
 	int volume() const
