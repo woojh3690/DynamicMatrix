@@ -57,9 +57,7 @@ public:
 	~Tensor()
 	{
 		for (auto mtx : this->m_childLink)
-		{
 			delete mtx;
-		}
 	}
 
 private:
@@ -68,23 +66,21 @@ private:
 
 	vector<int> changeIdxOfDim(int index, vector<int> fomatShape) const
 	{
-		std::reverse(fomatShape.begin(), fomatShape.end());
-
-		vector<int> matrixIdx;
+		int shapeSize = fomatShape.size();
+		vector<int> matrixIdx(shapeSize);
 		int idx = 0;
 		int Dn = 1;
 		int multi = 1;
 		int alpha = 0;
-		for (int i = 0; i < fomatShape.size(); i++)
+		for (int i = (shapeSize - 1); i >= 0; i--)
 		{
 			alpha += idx * multi;
 			multi *= Dn;
 			Dn = fomatShape[i];
 			idx = ((index - alpha) / multi) % Dn;
-			matrixIdx.push_back(idx);
+			matrixIdx[i] = idx;
 		}
 
-		std::reverse(matrixIdx.begin(), matrixIdx.end());
 		return matrixIdx;
 	}
 
@@ -108,8 +104,7 @@ public:
 
 	void append(const Tensor<T>& tsr)
 	{
-		Tensor<T>* newTsr = new Tensor<T>(tsr);
-		m_childLink.push_back(newTsr);
+		m_childLink.push_back(new Tensor<T>(tsr));
 	}
 
 	void concatenate(Tensor<T>& tsr, const int axis)
@@ -136,7 +131,7 @@ public:
 		}
 	}
 
-	Tensor<T>& reshape(vector<int> newShape)
+	Tensor<T> reshape(vector<int> newShape)
 	{
 		int emptyIndex = -1;
 		int newVolume = 1;
@@ -162,14 +157,14 @@ public:
 				to_string(curVolume) + " into shape " + this->strShape(newShape));
 		}
 
-		Tensor<T>* newTsr = new Tensor(newShape);
+		Tensor<T> newTsr(newShape);
 		vector<int> curShape = this->shape();
 		for (int i = 0; i < curVolume; i++)
 		{
 			T value = this->operator[](changeIdxOfDim(i, curShape)).value();
-			newTsr->operator[](changeIdxOfDim(i, newShape)) = value;
+			newTsr[changeIdxOfDim(i, newShape)] = value;
 		}
-		return *newTsr;
+		return newTsr;
 	}
 
 	Tensor<T>& resize(vector<int> shape)
@@ -181,8 +176,7 @@ public:
 			m_childLink.reserve(shape.front());
 			for (int i = 0; i < shape.front(); i++)
 			{
-				Tensor<T>* child_Tensor = new Tensor<T>(child_shape);
-				m_childLink.push_back(child_Tensor);
+				m_childLink.push_back(new Tensor<T>(child_shape));
 			}
 		}
 
@@ -207,12 +201,12 @@ public:
 
 	Tensor<T>& slice(const int start, const int end) const
 	{
-		Tensor<T>* newTsr = new Tensor<T>;
+		Tensor<T> newTsr;
 
 		for (int i = start; i < end; i++)
 		{
-			Tensor<T> childTsr(*this->m_childLink[i]);
-			newTsr->append(childTsr);
+			Tensor<T>* node = this->m_childLink[i];
+			newTsr.append(*node);
 		}
 
 		return *newTsr;
@@ -282,7 +276,7 @@ public:
 		return header;
 	}
 
-	Tensor<T>& matmul(Tensor<T>& tsr) const
+	Tensor<T> matmul(const Tensor<T>& tsr) const
 	{
 		vector<int> thisShape = this->shape();
 		vector<int> tsrShape = tsr.shape();
@@ -296,7 +290,7 @@ public:
 			throw invalid_argument("Argument axis is invalid value!");
 		}
 
-		Tensor<T>* newTsr = new Tensor<T>({ thisShape.front(), tsrShape.back() });
+		Tensor<T> newTsr({ thisShape.front(), tsrShape.back() });
 		#pragma omp parallel for
 		for (int i = 0; i < thisShape.front(); i++)
 		{
@@ -305,17 +299,17 @@ public:
 				T newVal = 0;
 				for (int j = 0; j < thisShape.back(); j++)
 				{
-					T thisVal = this->operator[](i).operator[](j).value();
-					T tsrVal = tsr.operator[](j).operator[](tsrI).value();
+					T thisVal = this->operator[](i)[j].value();
+					T tsrVal = tsr.operator[](j)[tsrI].value();
 					newVal += thisVal * tsrVal;
 				}
-				newTsr->operator[](i).operator[](tsrI) = newVal;
+				newTsr[i][tsrI] = newVal;
 			}
 		}
-		return *newTsr;
+		return newTsr;
 	}
 
-	Tensor<T>& transpose() const
+	Tensor<T> transpose() const
 	{
 		vector<int> curShpae = this->shape();
 
@@ -323,15 +317,15 @@ public:
 		if (curShpae.size() != 2)
 			throw invalid_argument("Currently we support only 2D Tensor.");
 
-		Tensor<T>* newTsr = new Tensor<T>({ curShpae[1], curShpae[0] });
+		Tensor<T> newTsr({ curShpae[1], curShpae[0] });
 		for (int i = 0; i < curShpae[0]; i++)
 		{
 			for (int j = 0; j < curShpae[1]; j++)
 			{
-				newTsr->operator[](j)[i] = this->operator[](i)[j];
+				newTsr[j][i] = this->operator[](i)[j];
 			}
 		}
-		return *newTsr;
+		return newTsr;
 	}
 
 	int volume() const
@@ -347,8 +341,8 @@ public:
 		return m_childLink.size();
 	}
 
-	template<typename selectDerived>
-	Tensor<selectDerived>& select(Tensor<selectDerived> thenTsr, Tensor<selectDerived> elseTsr)
+	template<typename derived>
+	Tensor<derived> select(const Tensor<derived>& thenTsr, const Tensor<derived>& elseTsr) const
 	{
 		vector<int> curShape = this->shape();
 		checkType<bool>();
@@ -359,19 +353,19 @@ public:
 			throw invalid_argument("The argument should be same shape of this.");
 		}
 
-		Tensor<selectDerived>* selectTsr = new Tensor<selectDerived>(curShape);
+		Tensor<derived> selectTsr(curShape);
 		#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
 			T boolValue = this->operator[](idx).value();
 			if (boolValue)
-				selectTsr->operator[](idx) = thenTsr[idx];
+				selectTsr[idx] = thenTsr[idx];
 			else
-				selectTsr->operator[](idx) = elseTsr[idx];
+				selectTsr[idx] = elseTsr[idx];
 		}
 
-		return *selectTsr;
+		return selectTsr;
 	}
 
 	vector<int> changeIdxOfDim(int i) const
@@ -389,7 +383,7 @@ public:
 		return m_value;
 	}
 
-	Tensor<T>& broadcasting(vector<int> shape) const
+	Tensor<T> broadcasting(vector<int> shape) const
 	{
 		vector<int> curShape = this->shape();
 		vector<int> childShape(shape.begin() + 1, shape.end());
@@ -399,83 +393,83 @@ public:
 				strShape(curShape) + " to " + strShape(childShape));
 		}
 
-		Tensor<T>* result = new Tensor<T>();
+		Tensor<T> result;
 		for (int i = 0; i < shape.front(); i++)
 		{
-			result->append(*this);
+			result.append(*this);
 		}
 
-		return *result;
+		return result;
 	}
 
 	/***************************************************/
 	/*                    연산자                       */
 	/***************************************************/
-	Tensor<double>& exp() const
+	Tensor<double> exp() const
 	{
 		checkType<double>();
 		vector<int> curShape = this->shape();
-		Tensor<double>* expTsr = new Tensor<double>(curShape);
+		Tensor<double> expTsr(curShape);
 		#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
 			double value = this->operator[](idx).value();
 			double exp_value = std::exp(value);
-			expTsr->operator[](idx) = exp_value;
+			expTsr[idx] = exp_value;
 		}
-		return *expTsr;
+		return expTsr;
 	}
 
-	Tensor<double>& sum() const
+	Tensor<double> sum() const
 	{
 		checkType<double>();
 
 		vector<int> childShape = m_childLink[0]->shape();
-		Tensor<double> *sumTsr = new Tensor<double>(childShape, 0);
+		Tensor<double> sumTsr(childShape, 0);
 		for (int i = 0; i < this->size(); i++)
 		{
-			sumTsr = &(*sumTsr + this->operator[](i));
+			sumTsr = sumTsr + this->operator[](i);
 		}
-		return *sumTsr;
+		return sumTsr;
 	}
 
-	Tensor<double>& mean() const
+	Tensor<double> mean() const
 	{
 		checkType<double>();
 		return sum() / this->volume();
 	}
 
-	Tensor<double>& pow() const
+	Tensor<double> pow() const
 	{
 		checkType<double>();
 
 		vector<int> curShape = this->shape();
-		Tensor<double>* expTsr = new Tensor<double>(curShape);
+		Tensor<double> expTsr(curShape);
 		#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
 			double value = this->operator[](idx).value();
 			double exp_value = std::pow(value, 2);
-			expTsr->operator[](idx) = exp_value;
+			expTsr[idx] = exp_value;
 		}
-		return *expTsr;
+		return expTsr;
 	}
 
-	Tensor<double>& sqrt() const
+	Tensor<double> sqrt() const
 	{
 		vector<int> curShape = this->shape();
-		Tensor<double>* expTsr = new Tensor<double>(curShape);
+		Tensor<double> expTsr(curShape);
 		#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
 			double value = this->operator[](idx).value();
 			double exp_value = std::sqrt(value);
-			expTsr->operator[](idx) = exp_value;
+			expTsr[idx] = exp_value;
 		}
-		return *expTsr;
+		return expTsr;
 	}
 
 	/***************************************************/
