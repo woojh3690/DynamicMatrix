@@ -25,14 +25,20 @@ public:
 		this->m_childLink.push_back(item);
 	}
 
-	Tensor(vector<int> shape)
+	Tensor(const vector<int>& shape)
 	{
-		resize(shape);
+		if (!shape.empty())
+		{
+			vector<int> child_shape(shape.begin() + 1, shape.end());
+			for (int i = 0; i < shape.front(); i++)
+			{
+				m_childLink.push_back(new Tensor<T>(child_shape));
+			}
+		}
 	}
 
-	Tensor(vector<int> shape, T initValue)
+	Tensor(const vector<int>& shape, T initValue) : Tensor(shape)
 	{
-		resize(shape);
 		fill(initValue);
 	}
 
@@ -44,17 +50,17 @@ public:
 	template <typename NODETYPE>
 	friend ostream& operator<<(ostream& os, Tensor<T>& dt);
 
-	DEFINE_OPERATOR(>)
-	DEFINE_OPERATOR(<)
-	DEFINE_OPERATOR(>=)
-	DEFINE_OPERATOR(<=)
+	DEFINE_OPERATOR(> )
+		DEFINE_OPERATOR(< )
+		DEFINE_OPERATOR(>= )
+		DEFINE_OPERATOR(<= )
 
-	DEFINE_OPERATOR(-)
-	DEFINE_OPERATOR(+)
-	DEFINE_OPERATOR(*)
-	DEFINE_OPERATOR(/)
+		DEFINE_OPERATOR(-)
+		DEFINE_OPERATOR(+)
+		DEFINE_OPERATOR(*)
+		DEFINE_OPERATOR(/ )
 
-	~Tensor()
+		~Tensor()
 	{
 		for (auto mtx : this->m_childLink)
 			delete mtx;
@@ -63,8 +69,9 @@ public:
 private:
 	vector<Tensor<T>*> m_childLink;
 	T m_value;
+	vector<int> m_shape;
 
-	vector<int> changeIdxOfDim(int index, vector<int> fomatShape) const
+	vector<int> changeIdxOfDim(const int index, const vector<int>& fomatShape) const
 	{
 		int shapeSize = fomatShape.size();
 		vector<int> matrixIdx(shapeSize);
@@ -167,26 +174,10 @@ public:
 		return newTsr;
 	}
 
-	Tensor<T>& resize(vector<int> shape)
-	{
-		this->~Tensor();
-		if (!shape.empty())
-		{
-			vector<int> child_shape(shape.begin() + 1, shape.end());
-			m_childLink.reserve(shape.front());
-			for (int i = 0; i < shape.front(); i++)
-			{
-				m_childLink.push_back(new Tensor<T>(child_shape));
-			}
-		}
-
-		return *this;
-	}
-
 	Tensor<T>& fill(T initValue)
 	{
 		vector<int> curShape = this->shape();
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			this->operator[](changeIdxOfDim(i, curShape)) = initValue;
@@ -194,12 +185,12 @@ public:
 		return *this;
 	}
 
-	Tensor<T>& slice(const int start) const
+	Tensor<T> slice(const int start) const
 	{
 		return slice(start, m_childLink.size());
 	}
 
-	Tensor<T>& slice(const int start, const int end) const
+	Tensor<T> slice(const int start, const int end) const
 	{
 		Tensor<T> newTsr;
 
@@ -209,7 +200,7 @@ public:
 			newTsr.append(*node);
 		}
 
-		return *newTsr;
+		return newTsr;
 	}
 
 	void erase(const int index)
@@ -265,7 +256,7 @@ public:
 		return strShape(this->shape());
 	}
 
-	string strShape(vector<int> shape) const
+	string strShape(const vector<int>& shape) const
 	{
 		string header = "(";
 		for (auto idx : shape)
@@ -291,7 +282,7 @@ public:
 		}
 
 		Tensor<T> newTsr({ thisShape.front(), tsrShape.back() });
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < thisShape.front(); i++)
 		{
 			for (int tsrI = 0; tsrI < tsrShape.back(); tsrI++)
@@ -354,7 +345,7 @@ public:
 		}
 
 		Tensor<derived> selectTsr(curShape);
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
@@ -368,7 +359,7 @@ public:
 		return selectTsr;
 	}
 
-	vector<int> changeIdxOfDim(int i) const
+	vector<int> changeIdxOfDim(const int i) const
 	{
 		return changeIdxOfDim(i, this->shape());
 	}
@@ -383,13 +374,13 @@ public:
 		return m_value;
 	}
 
-	Tensor<T> broadcasting(vector<int> shape) const
+	Tensor<T> broadcasting(const vector<int>& shape) const
 	{
 		vector<int> curShape = this->shape();
 		vector<int> childShape(shape.begin() + 1, shape.end());
 		if (curShape != childShape)
 		{
-			throw invalid_argument("Cannot broadcasting " + 
+			throw invalid_argument("Cannot broadcasting " +
 				strShape(curShape) + " to " + strShape(childShape));
 		}
 
@@ -410,7 +401,7 @@ public:
 		checkType<double>();
 		vector<int> curShape = this->shape();
 		Tensor<double> expTsr(curShape);
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
@@ -446,7 +437,7 @@ public:
 
 		vector<int> curShape = this->shape();
 		Tensor<double> expTsr(curShape);
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
@@ -461,7 +452,7 @@ public:
 	{
 		vector<int> curShape = this->shape();
 		Tensor<double> expTsr(curShape);
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
@@ -480,7 +471,7 @@ public:
 		return *m_childLink[n];
 	}
 
-	Tensor<T>& operator[](const vector<int> idxs)
+	Tensor<T>& operator[](const vector<int>& idxs)
 	{
 		if (!idxs.empty())
 		{
@@ -495,7 +486,7 @@ public:
 		return *m_childLink[n];
 	}
 
-	const Tensor<T>& operator[](const vector<int> idxs) const
+	const Tensor<T>& operator[](const vector<int>& idxs) const
 	{
 		if (!idxs.empty())
 		{
@@ -541,85 +532,86 @@ ostream & operator<<(ostream& os, Tensor<NODETYPE>& tsr)
 	return os << tsr.toString();
 }
 
-//auto& operator*(const Tensor<double>& lTsr, const double value) \
-//{ \
-//	auto type = 0.1 * 0.1; \
-//	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
-//	for (int i = 0; i < lTsr.volume(); i++) \
-//	{ \
-//		vector<int> idx = lTsr.changeIdxOfDim(i); \
-//		double tsrValue = lTsr.operator[](idx).value(); \
-//		result->operator[](idx) = tsrValue * value; \
-//	} \
-//	return *result; \
-//}
-//
-//auto& operator*(const double value, const Tensor<double>& lTsr) \
-//{ \
-//	auto type = 0.1 * 0.1; \
-//	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(lTsr.shape()); \
-//	for (int i = 0; i < lTsr.volume(); i++) \
-//	{ \
-//		vector<int> idx = lTsr.changeIdxOfDim(i); \
-//		double tsrValue = lTsr.operator[](idx).value(); \
-//		result->operator[](idx) = value * tsrValue; \
-//	} \
-//	return *result; \
-//}
-//
-//auto& operator*(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
-//{ \
-//	vector<int> lShape = lTsr.shape(); \
-//	vector<int> rShape = rTsr.shape(); \
-//	Tensor<double> newlTsr; \
-//	Tensor<double> newrTsr; \
-//	if (lShape != rShape) \
-//	{ \
-//		if (lShape == vector<int>({ 1 })) \
-//		{ \
-//			return operator*(lTsr[0].value(), rTsr); \
-//		} \
-//		else if (rShape == vector<int>({ 1 })) \
-//		{ \
-//			return operator*(lTsr, rTsr[0].value()); \
-//		} \
-//		else if (lShape.size() > rShape.size()) \
-//		{ \
-//			newrTsr = rTsr.broadcasting(lShape); \
-//			newlTsr = lTsr; \
-//		} \
-//		else if (lShape.size() < rShape.size())\
-//		{ \
-//			newlTsr = lTsr.broadcasting(rShape); \
-//			newrTsr = rTsr; \
-//		} \
-//	} \
-//	else \
-//	{ \
-//		newlTsr = lTsr; \
-//		newrTsr = rTsr; \
-//	} \
-// \
-//	auto type = 0.1 * 0.1; \
-//	Tensor<decltype(type)>* result = new Tensor<decltype(type)>(newlTsr.shape()); \
-//	for (int i = 0; i < newlTsr.volume(); i++) \
-//	{ \
-//		vector<int> idx = newlTsr.changeIdxOfDim(i); \
-//		double tsrValue = newlTsr.operator[](idx).value(); \
-//		double value = newrTsr.operator[](idx).value(); \
-//		result->operator[](idx) = tsrValue * value; \
-//	} \
-//	return *result; \
-//}
 
-MAKE_OPERATOR(>)
-MAKE_OPERATOR(<)
-MAKE_OPERATOR(>=)
-MAKE_OPERATOR(<=)
+static auto operator*(const Tensor<double>& lTsr, const double value) \
+{ \
+	auto type = 0.1 * 0.1; \
+	Tensor<decltype(type)> result(lTsr.shape()); \
+	for (int i = 0; i < lTsr.volume(); i++) \
+	{ \
+		vector<int> idx = lTsr.changeIdxOfDim(i); \
+		double tsrValue = lTsr[idx].value(); \
+		result[idx] = tsrValue * value; \
+	} \
+	return result; \
+}
+
+static auto operator*(const double value, const Tensor<double>& lTsr) \
+{ \
+	auto type = 0.1 * 0.1; \
+	Tensor<decltype(type)> result(lTsr.shape()); \
+	for (int i = 0; i < lTsr.volume(); i++) \
+	{ \
+		vector<int> idx = lTsr.changeIdxOfDim(i); \
+		double tsrValue = lTsr[idx].value(); \
+		result[idx] = value * tsrValue; \
+	} \
+	return result; \
+}
+
+static auto operator*(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
+{ \
+	vector<int> lShape = lTsr.shape(); \
+	vector<int> rShape = rTsr.shape(); \
+	Tensor<double> newlTsr; \
+	Tensor<double> newrTsr; \
+	if (lShape != rShape) \
+	{ \
+		if (lShape == vector<int>({ 1 })) \
+		{ \
+			return operator*(lTsr[0].value(), rTsr); \
+		} \
+		else if (rShape == vector<int>({ 1 })) \
+		{ \
+			return operator*(lTsr, rTsr[0].value()); \
+		} \
+		else if (lShape.size() > rShape.size()) \
+		{ \
+			newrTsr = rTsr.broadcasting(lShape); \
+			newlTsr = lTsr; \
+		} \
+		else if (lShape.size() < rShape.size())\
+		{ \
+			newlTsr = lTsr.broadcasting(rShape); \
+			newrTsr = rTsr; \
+		} \
+	} \
+	else \
+	{ \
+		newlTsr = lTsr; \
+		newrTsr = rTsr; \
+	} \
+ \
+	auto type = 0.1 * 0.1; \
+	Tensor<decltype(type)> result(newlTsr.shape()); \
+	for (int i = 0; i < newlTsr.volume(); i++) \
+	{ \
+		vector<int> idx = newlTsr.changeIdxOfDim(i); \
+		double tsrValue = newlTsr[idx].value(); \
+		double value = newrTsr[idx].value(); \
+		result[idx] = tsrValue * value; \
+	} \
+	return result; \
+}
+
+MAKE_OPERATOR(> )
+MAKE_OPERATOR(< )
+MAKE_OPERATOR(>= )
+MAKE_OPERATOR(<= )
 
 MAKE_OPERATOR(-)
 MAKE_OPERATOR(+)
-MAKE_OPERATOR(*)
-MAKE_OPERATOR(/)
+//MAKE_OPERATOR(*)
+MAKE_OPERATOR(/ )
 
 #endif // !TENSOR_H_

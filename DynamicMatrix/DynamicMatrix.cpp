@@ -7,8 +7,6 @@ using namespace std;
 int main()
 {
 	PerformanceTest test;
-	//test.allocateTest();
-	//test.matmulTest();
-	test.allocateTest();
+	test.shapeTest();
 	printf("end");
 } 

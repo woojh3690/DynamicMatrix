@@ -127,17 +127,18 @@ void PerformanceTest::copyRun()
 	cout << "tensor2 : " << tensor2 << endl;
 }
 
-void PerformanceTest::compareTest()
+void PerformanceTest::multiplyTest()
 {
 	Tensor<double> a({33, 33}, 2);
-	//Tensor<double> b({33, 33}, 3);
-	Tensor<double> b(3);
-	Tensor<double> result = (a * b);
+	Tensor<double> b({33, 33}, 3);
 
-	cout << "a" << endl << a << endl;
-	//cout << "b" << endl << b << endl << endl;
-
-	cout << result << endl;
+	cout << "--------------- copy test ---------------" << endl;
+	clock_t start = clock();
+	for (int i = 0; i < 100; i++)
+	{
+		Tensor<double> result = (a * b);
+	}
+	cout << "run time = " << clock() - start << " milliseconds." << endl;
 }
 
 void PerformanceTest::selectTest()
@@ -187,3 +188,15 @@ void PerformanceTest::expTest()
 	cout << temp << endl;
 }
 
+void PerformanceTest::shapeTest()
+{
+	Tensor<double> a({ 33, 33 }, 2);
+
+	cout << "--------------- copy test ---------------" << endl;
+	clock_t start = clock();
+	for (int i = 0; i < 1000; i++)
+	{
+		a.shape();
+	}
+	cout << "run time = " << clock() - start << " milliseconds." << endl;
+}
