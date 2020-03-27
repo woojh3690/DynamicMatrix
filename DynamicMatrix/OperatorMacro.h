@@ -7,7 +7,7 @@ friend auto operator##METHOD##(const double value, const Tensor<double>& lTsr); 
 friend auto operator##METHOD##(const Tensor<double>& lTsr, const Tensor<double>& rTsr); \
 
 #define MAKE_RIGHT_OPERATOR_DOUBLE(METHOD) \
-auto operator##METHOD##(const Tensor<double>& lTsr, const double value) \
+static auto operator##METHOD##(const Tensor<double>& lTsr, const double value) \
 { \
 	auto type = 0.1 ##METHOD## 0.1; \
 	Tensor<decltype(type)> result(lTsr.shape()); \
@@ -21,7 +21,7 @@ auto operator##METHOD##(const Tensor<double>& lTsr, const double value) \
 }
 
 #define MAKE_LEFT_OPERATOR_DOUBLE(METHOD) \
-auto operator##METHOD##(const double value, const Tensor<double>& lTsr) \
+static auto operator##METHOD##(const double value, const Tensor<double>& lTsr) \
 { \
 	auto type = 0.1 ##METHOD## 0.1; \
 	Tensor<decltype(type)> result(lTsr.shape()); \
@@ -35,7 +35,7 @@ auto operator##METHOD##(const double value, const Tensor<double>& lTsr) \
 }
 
 #define MAKE_TENSOR_OPERATOR(METHOD) \
-auto operator##METHOD##(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
+static auto operator##METHOD##(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
 { \
 	vector<int> lShape = lTsr.shape(); \
 	vector<int> rShape = rTsr.shape(); \
