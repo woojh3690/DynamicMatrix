@@ -51,16 +51,16 @@ public:
 	friend ostream& operator<<(ostream& os, Tensor<T>& dt);
 
 	DEFINE_OPERATOR(> )
-		DEFINE_OPERATOR(< )
-		DEFINE_OPERATOR(>= )
-		DEFINE_OPERATOR(<= )
+	DEFINE_OPERATOR(< )
+	DEFINE_OPERATOR(>= )
+	DEFINE_OPERATOR(<= )
 
-		DEFINE_OPERATOR(-)
-		DEFINE_OPERATOR(+)
-		DEFINE_OPERATOR(*)
-		DEFINE_OPERATOR(/ )
+	DEFINE_OPERATOR(-)
+	DEFINE_OPERATOR(+)
+	DEFINE_OPERATOR(*)
+	DEFINE_OPERATOR(/ )
 
-		~Tensor()
+	~Tensor()
 	{
 		for (auto mtx : this->m_childLink)
 			delete mtx;
@@ -69,7 +69,6 @@ public:
 private:
 	vector<Tensor<T>*> m_childLink;
 	T m_value;
-	vector<int> m_shape;
 
 	vector<int> changeIdxOfDim(const int index, const vector<int>& fomatShape) const
 	{
@@ -224,7 +223,7 @@ public:
 	string toString() const
 	{
 		string result = "[";
-		int shapeSize = (int)this->shape().size();
+		int shapeSize = this->shape().size();
 
 		if (shapeSize == 1)
 		{
@@ -516,9 +515,10 @@ public:
 		}
 		else
 		{
+			m_childLink.resize(rShape.front());
 			for (int i = 0; i < rShape.front(); i++)
 			{
-				m_childLink.push_back(new Tensor<T>(tsr[i]));
+				m_childLink[i] = new Tensor<T>(tsr[i]);
 			}
 		}
 
@@ -537,7 +537,8 @@ static auto operator*(const Tensor<double>& lTsr, const double value) \
 { \
 	auto type = 0.1 * 0.1; \
 	Tensor<decltype(type)> result(lTsr.shape()); \
-	for (int i = 0; i < lTsr.volume(); i++) \
+	int volume = lTsr.volume(); \
+	for (int i = 0; i < volume; i++) \
 	{ \
 		vector<int> idx = lTsr.changeIdxOfDim(i); \
 		double tsrValue = lTsr[idx].value(); \
@@ -550,7 +551,8 @@ static auto operator*(const double value, const Tensor<double>& lTsr) \
 { \
 	auto type = 0.1 * 0.1; \
 	Tensor<decltype(type)> result(lTsr.shape()); \
-	for (int i = 0; i < lTsr.volume(); i++) \
+	int volume = lTsr.volume(); \
+	for (int i = 0; i < volume; i++) \
 	{ \
 		vector<int> idx = lTsr.changeIdxOfDim(i); \
 		double tsrValue = lTsr[idx].value(); \
@@ -594,7 +596,8 @@ static auto operator*(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
  \
 	auto type = 0.1 * 0.1; \
 	Tensor<decltype(type)> result(newlTsr.shape()); \
-	for (int i = 0; i < newlTsr.volume(); i++) \
+	int volume = newlTsr.volume(); \
+	for (int i = 0; i < volume; i++) \
 	{ \
 		vector<int> idx = newlTsr.changeIdxOfDim(i); \
 		double tsrValue = newlTsr[idx].value(); \

@@ -7,6 +7,6 @@ using namespace std;
 int main()
 {
 	PerformanceTest test;
-	test.shapeTest();
+	test.multiplyTest();
 	printf("end");
 } 

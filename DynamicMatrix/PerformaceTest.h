@@ -16,4 +16,6 @@ public:
 	void selectTest();
 	void expTest();
 	void shapeTest();
+	void volumeTest();
+	void changeIdxTest();
 };

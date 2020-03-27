@@ -130,7 +130,7 @@ void PerformanceTest::copyRun()
 void PerformanceTest::multiplyTest()
 {
 	Tensor<double> a({33, 33}, 2);
-	Tensor<double> b({33, 33}, 3);
+	Tensor<double> b({33}, 3);
 
 	cout << "--------------- copy test ---------------" << endl;
 	clock_t start = clock();
@@ -197,6 +197,32 @@ void PerformanceTest::shapeTest()
 	for (int i = 0; i < 1000; i++)
 	{
 		a.shape();
+	}
+	cout << "run time = " << clock() - start << " milliseconds." << endl;
+}
+
+void PerformanceTest::volumeTest()
+{
+	Tensor<double> a({ 33, 33 }, 2);
+
+	cout << "--------------- copy test ---------------" << endl;
+	clock_t start = clock();
+	for (int i = 0; i < 1000; i++)
+	{
+		a.volume();
+	}
+	cout << "run time = " << clock() - start << " milliseconds." << endl;
+}
+
+void PerformanceTest::changeIdxTest()
+{
+	Tensor<double> a({ 33, 33 }, 2);
+
+	cout << "--------------- changeIdxTest test ---------------" << endl;
+	clock_t start = clock();
+	for (int i = 0; i < 1000; i++)
+	{
+		a.changeIdxOfDim(10);
 	}
 	cout << "run time = " << clock() - start << " milliseconds." << endl;
 }
