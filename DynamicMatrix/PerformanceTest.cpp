@@ -107,12 +107,11 @@ void PerformanceTest::transposeTest()
 
 void PerformanceTest::copyTest()
 {
-	Tensor<int> tensor1({ 128, 128 }, 100);
+	Tensor<int> tensor1({ 13824, 6 }, 100);
 	Tensor<int> tensor2;
-
 	cout << "--------------- copy test ---------------" << endl;
 	clock_t start = clock();
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 1000; i++)
 	{
 		tensor2 = tensor1;
 	}
@@ -220,9 +219,9 @@ void PerformanceTest::changeIdxTest()
 
 	cout << "--------------- changeIdxTest test ---------------" << endl;
 	clock_t start = clock();
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 10000; i++)
 	{
-		a.changeIdxOfDim(10);
+		vector<int> b = a.changeIdxOfDim(39);
 	}
 	cout << "run time = " << clock() - start << " milliseconds." << endl;
 }

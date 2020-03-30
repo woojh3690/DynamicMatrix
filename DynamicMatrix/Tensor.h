@@ -30,9 +30,11 @@ public:
 		if (!shape.empty())
 		{
 			vector<int> child_shape(shape.begin() + 1, shape.end());
+			m_childLink.resize(shape.front());
+//#pragma omp parallel for
 			for (int i = 0; i < shape.front(); i++)
 			{
-				m_childLink.push_back(new Tensor<T>(child_shape));
+				m_childLink[i] = new Tensor<T>(child_shape);
 			}
 		}
 	}
@@ -89,7 +91,7 @@ private:
 
 		return matrixIdx;
 	}
-
+	
 	template<typename check_T>
 	void checkType() const
 	{
@@ -176,7 +178,7 @@ public:
 	Tensor<T>& fill(T initValue)
 	{
 		vector<int> curShape = this->shape();
-#pragma omp parallel for
+//#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			this->operator[](changeIdxOfDim(i, curShape)) = initValue;
@@ -281,7 +283,7 @@ public:
 		}
 
 		Tensor<T> newTsr({ thisShape.front(), tsrShape.back() });
-#pragma omp parallel for
+//#pragma omp parallel for
 		for (int i = 0; i < thisShape.front(); i++)
 		{
 			for (int tsrI = 0; tsrI < tsrShape.back(); tsrI++)
@@ -308,6 +310,7 @@ public:
 			throw invalid_argument("Currently we support only 2D Tensor.");
 
 		Tensor<T> newTsr({ curShpae[1], curShpae[0] });
+//#pragma omp parallel for
 		for (int i = 0; i < curShpae[0]; i++)
 		{
 			for (int j = 0; j < curShpae[1]; j++)
@@ -344,7 +347,7 @@ public:
 		}
 
 		Tensor<derived> selectTsr(curShape);
-#pragma omp parallel for
+//#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
@@ -400,7 +403,7 @@ public:
 		checkType<double>();
 		vector<int> curShape = this->shape();
 		Tensor<double> expTsr(curShape);
-#pragma omp parallel for
+//#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
@@ -436,7 +439,7 @@ public:
 
 		vector<int> curShape = this->shape();
 		Tensor<double> expTsr(curShape);
-#pragma omp parallel for
+//#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
@@ -451,7 +454,7 @@ public:
 	{
 		vector<int> curShape = this->shape();
 		Tensor<double> expTsr(curShape);
-#pragma omp parallel for
+//#pragma omp parallel for
 		for (int i = 0; i < this->volume(); i++)
 		{
 			vector<int> idx = changeIdxOfDim(i, curShape);
@@ -516,6 +519,8 @@ public:
 		else
 		{
 			m_childLink.resize(rShape.front());
+//omp_set_num_threads(8);
+//#pragma omp parallel for
 			for (int i = 0; i < rShape.front(); i++)
 			{
 				m_childLink[i] = new Tensor<T>(tsr[i]);
