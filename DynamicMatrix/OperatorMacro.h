@@ -3,7 +3,7 @@
 
 #define DEFINE_OPERATOR(METHOD) \
 friend auto operator##METHOD##(const Tensor<double>& lTsr, const double value); \
-friend auto operator##METHOD##(const double value, const Tensor<double>& lTsr); \
+friend auto operator##METHOD##(const double value, const Tensor<double>& rTsr); \
 friend auto operator##METHOD##(const Tensor<double>& lTsr, const Tensor<double>& rTsr); \
 
 #define MAKE_RIGHT_OPERATOR_DOUBLE(METHOD) \
@@ -11,26 +11,28 @@ static auto operator##METHOD##(const Tensor<double>& lTsr, const double value) \
 { \
 	auto type = 0.1 ##METHOD## 0.1; \
 	Tensor<decltype(type)> result(lTsr.shape()); \
-	for (int i = 0; i < lTsr.volume(); i++) \
+	vector<int> formatShape = lTsr.shape(); \
+	vector<int> idx(formatShape.size()); \
+	do \
 	{ \
-		vector<int> idx = lTsr.changeIdxOfDim(i); \
-		double tsrValue = lTsr.operator[](idx).value(); \
+		double tsrValue = lTsr[idx].value(); \
 		result[idx] = tsrValue ##METHOD## value; \
-	} \
+	} while (dPlus(formatShape, idx)); \
 	return result; \
 }
 
 #define MAKE_LEFT_OPERATOR_DOUBLE(METHOD) \
-static auto operator##METHOD##(const double value, const Tensor<double>& lTsr) \
+static auto operator##METHOD##(const double value, const Tensor<double>& rTsr) \
 { \
 	auto type = 0.1 ##METHOD## 0.1; \
-	Tensor<decltype(type)> result(lTsr.shape()); \
-	for (int i = 0; i < lTsr.volume(); i++) \
+	Tensor<decltype(type)> result(rTsr.shape()); \
+	vector<int> formatShape = rTsr.shape(); \
+	vector<int> idx(formatShape.size()); \
+	do \
 	{ \
-		vector<int> idx = lTsr.changeIdxOfDim(i); \
-		double tsrValue = lTsr.operator[](idx).value(); \
+		double tsrValue = rTsr[idx].value(); \
 		result[idx] = value ##METHOD## tsrValue; \
-	} \
+	} while (dPlus(formatShape, idx)); \
 	return result; \
 }
 
@@ -70,13 +72,14 @@ static auto operator##METHOD##(const Tensor<double>& lTsr, const Tensor<double>&
  \
 	auto type = 0.1 ##METHOD## 0.1; \
 	Tensor<decltype(type)> result(newlTsr.shape()); \
-	for (int i = 0; i < newlTsr.volume(); i++) \
+	vector<int> formatShape = lTsr.shape(); \
+	vector<int> idx(formatShape.size()); \
+	do \
 	{ \
-		vector<int> idx = newlTsr.changeIdxOfDim(i); \
-		double tsrValue = newlTsr.operator[](idx).value(); \
-		double value = newrTsr.operator[](idx).value(); \
+		double tsrValue = newlTsr[idx].value(); \
+		double value = newrTsr[idx].value(); \
 		result[idx] = tsrValue ##METHOD## value; \
-	} \
+	} while (dPlus(formatShape, idx)); \
 	return result; \
 }
 

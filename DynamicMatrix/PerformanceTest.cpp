@@ -3,6 +3,7 @@
 #include <time.h>
 #include <iostream>
 using namespace std;
+using namespace Matrix;
 
 PerformanceTest::PerformanceTest()
 {
@@ -111,7 +112,7 @@ void PerformanceTest::copyTest()
 	Tensor<int> tensor2;
 	cout << "--------------- copy test ---------------" << endl;
 	clock_t start = clock();
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		tensor2 = tensor1;
 	}
@@ -135,7 +136,7 @@ void PerformanceTest::multiplyTest()
 	clock_t start = clock();
 	for (int i = 0; i < 100; i++)
 	{
-		Tensor<double> result = (a * b);
+		Tensor<double> result = (a + b);
 	}
 	cout << "run time = " << clock() - start << " milliseconds." << endl;
 }
@@ -213,15 +214,15 @@ void PerformanceTest::volumeTest()
 	cout << "run time = " << clock() - start << " milliseconds." << endl;
 }
 
-void PerformanceTest::changeIdxTest()
-{
-	Tensor<double> a({ 33, 33 }, 2);
-
-	cout << "--------------- changeIdxTest test ---------------" << endl;
-	clock_t start = clock();
-	for (int i = 0; i < 10000; i++)
-	{
-		vector<int> b = a.changeIdxOfDim(39);
-	}
-	cout << "run time = " << clock() - start << " milliseconds." << endl;
-}
+//void PerformanceTest::changeIdxTest()
+//{
+//	Tensor<double> a({ 33, 33 }, 2);
+//
+//	cout << "--------------- changeIdxTest test ---------------" << endl;
+//	clock_t start = clock();
+//	for (int i = 0; i < 10000; i++)
+//	{
+//		vector<int> b = a.changeIdxOfDim(39);
+//	}
+//	cout << "run time = " << clock() - start << " milliseconds." << endl;
+//}
