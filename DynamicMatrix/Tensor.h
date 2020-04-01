@@ -7,6 +7,7 @@
 #include <string>
 #include <math.h>
 #include <assert.h>
+#include <sstream>
 #include "OperatorMacro.h"
 using namespace std;
 
@@ -23,7 +24,7 @@ namespace Matrix
 		{
 		}
 
-		Tensor(const T value)
+		Tensor(const T& value)
 		{
 			Tensor<T>* item = new Tensor<T>;
 			item->m_value = value;
@@ -219,7 +220,6 @@ namespace Matrix
 		{
 			string result = "[";
 			int shapeSize = this->shape().size();
-
 			if (shapeSize == 1)
 			{
 				for (auto child : this->m_childLink)
@@ -241,8 +241,73 @@ namespace Matrix
 				}
 				result.replace(result.size() - shapeSize, result.size(), "]");
 			}
-
 			return result;
+		}
+
+		bool loadFromString(const string& str)
+		{
+			this->~Tensor();
+			char l_bracket = '[';
+			char r_bracket = ']';
+			if (str.front() != l_bracket || str.back() != r_bracket)
+				throw invalid_argument("string format must be [] type");
+			
+			string strTsr = str.substr(1, str.size() - 2);
+			string::size_type idx = strTsr.find(l_bracket);
+			if (idx == string::npos)
+			{
+				int count = 0;
+				int startIdx = 0;
+				T ptr;
+				for (int i = 0; i < strTsr.size(); i++)
+				{
+					char letter = strTsr[i];
+					if (letter == ',')
+					{
+						string item = strTsr.substr(startIdx, i - startIdx);
+						std::istringstream(item) >> ptr;
+						m_childLink.push_back(new Tensor());
+						m_childLink[size() - 1]->operator=(ptr);
+						startIdx = i+2;
+					}
+
+				}
+				string item = strTsr.substr(startIdx, strTsr.size());
+				std::istringstream(item) >> ptr;
+				m_childLink.push_back(new Tensor());
+				m_childLink[size() - 1]->operator=(ptr);
+			}
+			else
+			{
+				int count = 0;
+				int startIdx = 0;
+				for (int i = 0; i < strTsr.size(); i++)
+				{
+					char letter = strTsr[i];
+					if (letter == l_bracket)
+					{
+						count++;
+						if (count == 1)
+						{
+							startIdx = i;
+						}
+					}
+
+					if (letter == r_bracket)
+					{
+						count--;
+						if (count == 0)
+						{
+							string child_strTsr = strTsr.substr(startIdx, i - startIdx + 1);
+							Tensor* child_tsr = new Tensor();
+							child_tsr->loadFromString(child_strTsr);
+							m_childLink.push_back(child_tsr);
+						}
+					}
+			}
+			
+			}
+			return true;
 		}
 
 		string strShape() const
@@ -349,11 +414,6 @@ namespace Matrix
 			} while (dPlus(curShape, idx));
 			return selectTsr;
 		}
-
-		/*vector<int> changeIdxOfDim(const int i) const
-		{
-			return changeIdxOfDim(i, this->shape());
-		}*/
 
 		T value() const
 		{
