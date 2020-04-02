@@ -8,6 +8,7 @@
 #include <math.h>
 #include <assert.h>
 #include <sstream>
+#include <random>
 #include "OperatorMacro.h"
 using namespace std;
 
@@ -304,8 +305,7 @@ namespace Matrix
 							m_childLink.push_back(child_tsr);
 						}
 					}
-			}
-			
+				}
 			}
 			return true;
 		}
@@ -443,6 +443,22 @@ namespace Matrix
 			return result;
 		}
 
+		Tensor<double>& randomInit(int min, int max)
+		{
+			checkType<double>();
+
+			random_device rn;
+			mt19937_64 rnd(rn());
+			uniform_real_distribution<double> range(min, max);
+
+			vector<int> curShape = this->shape();
+			vector<int> idx(curShape.size());
+			do
+			{
+				this->operator[](idx) = range(rnd);
+			} while (dPlus(curShape, idx));
+			return *this;
+		}
 		/***************************************************/
 		/*                    연산자                       */
 		/***************************************************/
@@ -609,81 +625,81 @@ namespace Matrix
 		return true;
 	}
 
-	static auto operator+(const Tensor<double>& lTsr, const double value) \
-	{ \
-		auto type = 0.1 + 0.1; \
-		Tensor<decltype(type)> result(lTsr.shape()); \
-		vector<int> formatShape = lTsr.shape();
-		vector<int> idx(formatShape.size());
-		do
-		{
-			double tsrValue = lTsr[idx].value(); \
-			result[idx] = tsrValue + value; \
-		} while (dPlus(formatShape, idx));
+	//static auto operator+(const Tensor<double>& lTsr, const double value) \
+	//{ \
+	//	auto type = 0.1 + 0.1; \
+	//	Tensor<decltype(type)> result(lTsr.shape()); \
+	//	vector<int> formatShape = lTsr.shape();
+	//	vector<int> idx(formatShape.size());
+	//	do
+	//	{
+	//		double tsrValue = lTsr[idx].value(); \
+	//		result[idx] = tsrValue + value; \
+	//	} while (dPlus(formatShape, idx));
 
-		return result; \
-	}
+	//	return result; \
+	//}
 
-	static auto operator+(const double value, const Tensor<double>& rTsr) \
-	{ \
-		auto type = 0.1 + 0.1; \
-		Tensor<decltype(type)> result(rTsr.shape()); \
-		vector<int> formatShape = rTsr.shape();
-		vector<int> idx(formatShape.size());
-		do
-		{
-			double tsrValue = rTsr[idx].value(); \
-			result[idx] = value + tsrValue; \
-		} while (dPlus(formatShape, idx));
+	//static auto operator+(const double value, const Tensor<double>& rTsr) \
+	//{ \
+	//	auto type = 0.1 + 0.1; \
+	//	Tensor<decltype(type)> result(rTsr.shape()); \
+	//	vector<int> formatShape = rTsr.shape();
+	//	vector<int> idx(formatShape.size());
+	//	do
+	//	{
+	//		double tsrValue = rTsr[idx].value(); \
+	//		result[idx] = value + tsrValue; \
+	//	} while (dPlus(formatShape, idx));
 
-		return result; \
-	}
+	//	return result; \
+	//}
 
-	static auto operator+(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
-	{ \
-		vector<int> lShape = lTsr.shape(); \
-		vector<int> rShape = rTsr.shape(); \
-		Tensor<double> newlTsr; \
-		Tensor<double> newrTsr; \
-		if (lShape != rShape) \
-		{ \
-			if (lShape == vector<int>({ 1 })) \
-			{ \
-				return operator+(lTsr[0].value(), rTsr); \
-			} \
-			else if (rShape == vector<int>({ 1 })) \
-			{ \
-				return operator+(lTsr, rTsr[0].value()); \
-			} \
-			else if (lShape.size() > rShape.size()) \
-			{ \
-				newlTsr = lTsr; \
-				newrTsr = rTsr.broadcasting(lShape); \
-			} \
-			else if (lShape.size() < rShape.size())\
-			{ \
-				newlTsr = lTsr.broadcasting(rShape); \
-				newrTsr = rTsr; \
-			} \
-		} \
-		else \
-		{ \
-			newlTsr = lTsr; \
-			newrTsr = rTsr; \
-		} \
-	 \
-		auto type = 0.1 + 0.1; \
-		Tensor<decltype(type)> result(newlTsr.shape()); \
-		vector<int> formatShape = lTsr.shape();
-		vector<int> idx(formatShape.size());
-		do
-		{
-			double tsrValue = newlTsr[idx].value(); \
-			double value = newrTsr[idx].value(); \
-			result[idx] = tsrValue + value; \
-		} while (dPlus(formatShape, idx));
-		return result; \
-	}
+	//static auto operator+(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
+	//{ \
+	//	vector<int> lShape = lTsr.shape(); \
+	//	vector<int> rShape = rTsr.shape(); \
+	//	Tensor<double> newlTsr; \
+	//	Tensor<double> newrTsr; \
+	//	if (lShape != rShape) \
+	//	{ \
+	//		if (lShape == vector<int>({ 1 })) \
+	//		{ \
+	//			return operator+(lTsr[0].value(), rTsr); \
+	//		} \
+	//		else if (rShape == vector<int>({ 1 })) \
+	//		{ \
+	//			return operator+(lTsr, rTsr[0].value()); \
+	//		} \
+	//		else if (lShape.size() > rShape.size()) \
+	//		{ \
+	//			newlTsr = lTsr; \
+	//			newrTsr = rTsr.broadcasting(lShape); \
+	//		} \
+	//		else if (lShape.size() < rShape.size())\
+	//		{ \
+	//			newlTsr = lTsr.broadcasting(rShape); \
+	//			newrTsr = rTsr; \
+	//		} \
+	//	} \
+	//	else \
+	//	{ \
+	//		newlTsr = lTsr; \
+	//		newrTsr = rTsr; \
+	//	} \
+	// \
+	//	auto type = 0.1 + 0.1; \
+	//	Tensor<decltype(type)> result(newlTsr.shape()); \
+	//	vector<int> formatShape = lTsr.shape();
+	//	vector<int> idx(formatShape.size());
+	//	do
+	//	{
+	//		double tsrValue = newlTsr[idx].value(); \
+	//		double value = newrTsr[idx].value(); \
+	//		result[idx] = tsrValue + value; \
+	//	} while (dPlus(formatShape, idx));
+	//	return result; \
+	//}
 
 	MAKE_OPERATOR(> )
 	MAKE_OPERATOR(< )
@@ -691,7 +707,7 @@ namespace Matrix
 	MAKE_OPERATOR(<=)
 
 	MAKE_OPERATOR(-)
-	//MAKE_OPERATOR(+)
+	MAKE_OPERATOR(+)
 	MAKE_OPERATOR(*)
 	MAKE_OPERATOR(/)
 }

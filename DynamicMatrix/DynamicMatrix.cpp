@@ -17,16 +17,8 @@ int main()
 	/*PerformanceTest test;
 	test.copyTest();
 	printf("end");*/                                                       
-
-	string temp = { 1, 2, 3 };
-
-	vector<int> mother = { 2,3,4,10 };
-
-	Tensor<double> a(mother, 10);
-	string strValue = a.toString();
-
-	Tensor<double> b;
-	b.loadFromString(strValue);
+	Tensor<double> temp({ 2, 3 });
+	temp.randomInit(-5, 5);
 
 	return 0;
 }
