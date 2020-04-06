@@ -1,5 +1,6 @@
 #include "PerformaceTest.h"
 #include "include/Tensor.h"
+#include "include/CSVToTsrReader.h"
 #include <time.h>
 #include <iostream>
 using namespace std;
@@ -192,15 +193,18 @@ void PerformanceTest::volumeTest()
 	cout << "run time = " << clock() - start << " milliseconds." << endl;
 }
 
-//void PerformanceTest::changeIdxTest()
-//{
-//	Tensor<double> a({ 33, 33 }, 2);
-//
-//	cout << "--------------- changeIdxTest test ---------------" << endl;
-//	clock_t start = clock();
-//	for (int i = 0; i < 10000; i++)
-//	{
-//		vector<int> b = a.changeIdxOfDim(39);
-//	}
-//	cout << "run time = " << clock() - start << " milliseconds." << endl;
-//}
+void PerformanceTest::CSVReadTest()
+{
+	Tensor<double> a({ 33, 33 }, 2);
+
+	cout << "--------------- CSVReadTest test ---------------" << endl;
+	clock_t start = clock();
+
+	csv::CSVFormat format;
+	format.delimiter(',')
+		.column_names({ "a", "b", "c" });
+	CSVToTsrReader reader("test.csv", format);
+	Tensor<double> temp = reader.to_tensor<double>();
+
+	cout << "run time = " << clock() - start << " milliseconds." << endl;
+}
