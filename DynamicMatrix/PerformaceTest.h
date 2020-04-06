@@ -18,4 +18,5 @@ public:
 	void shapeTest();
 	void volumeTest();
 	void CSVReadTest();
+	void SplitTest();
 };

@@ -39,6 +39,7 @@ void PerformanceTest::runTest()
 	shapeTest();
 	volumeTest();
 	CSVReadTest();
+	SplitTest();
 }
 
 void PerformanceTest::matmulTest()
@@ -207,5 +208,19 @@ void PerformanceTest::CSVReadTest()
 	CSVToTsrReader reader("test.csv", format);
 	Tensor<double> temp = reader.to_tensor<double>();
 
+	cout << "run time = " << clock() - start << " milliseconds." << endl;
+}
+
+void PerformanceTest::SplitTest()
+{
+	Tensor<double> a({ 33, 33 }, 2);
+
+	cout << "--------------- Split test ---------------" << endl;
+	clock_t start = clock();
+
+	for (int i = 0; i < 1000; i++)
+	{
+		Tensor<double> result = a.split(4, 1);
+	}
 	cout << "run time = " << clock() - start << " milliseconds." << endl;
 }

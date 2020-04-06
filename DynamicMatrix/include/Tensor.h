@@ -189,14 +189,36 @@ namespace Matrix
 		Tensor<T> slice(const size_t start, const size_t end) const
 		{
 			Tensor<T> newTsr;
-
 			for (size_t i = start; i < end; i++)
 			{
 				Tensor<T>* node = this->m_childLink[i];
 				newTsr.append(*node);
 			}
-
 			return newTsr;
+		}
+
+		Tensor<T> split(const size_t idx, unsigned int axis = 0)
+		{
+
+			if (axis == 0)
+			{
+				Tensor<T> result;
+				result.append(this->slice(0, idx));
+				result.append(this->slice(idx));
+				return result;
+			}
+			else
+			{
+				Tensor<T> result({2, 0});
+				Tensor<T> splited;
+				for (auto childTsr : m_childLink)
+				{
+					splited = childTsr->split(idx, axis - 1);
+					result[0].append(splited[0]);
+					result[1].append(splited[1]);
+				}
+				return result;
+			}
 		}
 
 		void erase(const size_t index)

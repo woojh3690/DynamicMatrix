@@ -11,10 +11,8 @@ using namespace Matrix;
 
 void mainCode()
 {
-	csv::CSVFormat format;
-	format.delimiter(',').column_names({ "a", "b", "c" });
-	Matrix::CSVToTsrReader reader("test.csv", format);
-	Tensor<double> a = reader.to_tensor<double>();
+	PerformanceTest test;
+	test.runTest();
 }
 
 int main()
