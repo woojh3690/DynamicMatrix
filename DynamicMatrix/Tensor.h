@@ -533,6 +533,11 @@ namespace Matrix
 			return *m_childLink[n];
 		}
 
+		const Tensor<T>& operator[](const int n) const
+		{
+			return *m_childLink[n];
+		}
+
 		Tensor<T>& operator[](const vector<int>& idxs)
 		{
 			if (!idxs.empty())
@@ -541,11 +546,6 @@ namespace Matrix
 				return m_childLink[idxs.front()]->operator[](child_idxs);
 			}
 			return *this;
-		}
-
-		const Tensor<T>& operator[](const int n) const
-		{
-			return *m_childLink[n];
 		}
 
 		const Tensor<T>& operator[](const vector<int>& idxs) const

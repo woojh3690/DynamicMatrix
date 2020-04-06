@@ -27,38 +27,16 @@ void PerformanceTest::allocateTest()
 
 void PerformanceTest::runTest()
 {
-	Tensor<int> tensor1({ 3, 3, 3 });
-
-	int value = 0;
-	for (int i = 0; i < 3; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			for (int k = 0; k < 3; k++)
-			{
-				tensor1[i][j][k] = value++;
-			}
-		}
-	}
-
-	cout << tensor1 << endl;
-
-	cout << "--------------- example 2 ---------------" << endl;
-	Tensor<int> tensor2 = tensor1;
-	Tensor<int> tensor3 = tensor2.slice(1, 2);
-	cout << tensor3 << endl;
-
-	cout << "--------------- example 3 ---------------" << endl;
-	Tensor<int> tensor4 = tensor3.reshape({ 3, 3, 1 });
-	cout << tensor4 << endl;
-
-	cout << "--------------- example 4 ---------------" << endl;
-	tensor1.concatenate(tensor4, 2);
-	cout << tensor1 << endl;
-
-	cout << "--------------- example 5 ---------------" << endl;
-	tensor1.concatenate(tensor4, 2);
-	cout << tensor1 << endl;
+	allocateTest();
+	matmulTest();
+	transposeTest();
+	copyTest();
+	copyRun();
+	multiplyTest();
+	selectTest();
+	expTest();
+	shapeTest();
+	volumeTest();
 }
 
 void PerformanceTest::matmulTest()
@@ -99,7 +77,7 @@ void PerformanceTest::transposeTest()
 
 	cout << "--------------- transpose test ---------------" << endl;
 	clock_t start = clock();
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		tensor1.transpose();
 	}
