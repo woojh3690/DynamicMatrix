@@ -21,14 +21,11 @@ void checkMemorLeak()
 }
 
 int main()
-{                                                  
+{                                             
 	csv::CSVFormat format;
-	format.delimiter(',')
-		.column_names({ "a", "b", "c" });
-	CSVToTsrReader reader("test.csv", format);
-
-	Tensor<double> temp = reader.to_tensor<double>();
-
+	format.delimiter(',').column_names({ "a", "b", "c" });
+	Matrix::CSVToTsrReader reader("test.csv");
+	Tensor<double> a = reader.to_tensor<double>();
 
 	checkMemorLeak();
 	return 0;
