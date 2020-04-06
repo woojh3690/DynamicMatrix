@@ -26,16 +26,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Tensor.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="MatrixData.h">
       <Filter>헤더 파일\test</Filter>
     </ClInclude>
     <ClInclude Include="PerformaceTest.h">
       <Filter>헤더 파일\test</Filter>
     </ClInclude>
-    <ClInclude Include="OperatorMacro.h">
+    <ClInclude Include="include\OperatorMacro.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Tensor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

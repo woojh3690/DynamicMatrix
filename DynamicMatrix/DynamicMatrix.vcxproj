@@ -173,10 +173,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\OperatorMacro.h" />
+    <ClInclude Include="include\Tensor.h" />
     <ClInclude Include="MatrixData.h" />
-    <ClInclude Include="OperatorMacro.h" />
     <ClInclude Include="PerformaceTest.h" />
-    <ClInclude Include="Tensor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DynamicMatrix.cpp" />
