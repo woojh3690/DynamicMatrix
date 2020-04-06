@@ -17,7 +17,7 @@ namespace Matrix
 	static bool dPlus(const vector<int>& shape, vector<int>& idx);
 	static bool dPlus(const vector<int>& shape, vector<int>& idx, int cur);
 
-	template <typename T>
+	template <typename T=double>
 	class Tensor
 	{
 	public:
@@ -220,7 +220,7 @@ namespace Matrix
 		string toString() const
 		{
 			string result = "[";
-			int shapeSize = this->shape().size();
+			size_t shapeSize = this->shape().size();
 			if (shapeSize == 1)
 			{
 				for (auto child : this->m_childLink)
@@ -595,7 +595,7 @@ namespace Matrix
 		return os << tsr.toString();
 	}
 
-	static bool dPlus(const vector<int>& shape, vector<int>& idx, int cur)
+	static bool dPlus(const vector<int>& shape, vector<int>& idx, size_t cur)
 	{
 		idx[cur]++;
 		if (shape[cur] <= idx[cur])
@@ -612,7 +612,7 @@ namespace Matrix
 
 	static bool dPlus(const vector<int>& shape, vector<int>& idx)
 	{
-		int cur = idx.size() - 1;
+		size_t cur = idx.size() - 1;
 		idx[cur]++;
 		if (shape[cur] <= idx[cur])
 		{
