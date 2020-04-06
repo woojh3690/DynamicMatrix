@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include "PerformaceTest.h"
 #include "include/Tensor.h"
+#include "include/CSVToTsrReader.h"
 #include <time.h>
 #include <vector>
 #include <crtdbg.h>
@@ -21,8 +22,14 @@ void checkMemorLeak()
 
 int main()
 {                                                  
-	PerformanceTest test;
-	test.runTest();
+	csv::CSVFormat format;
+	format.delimiter(',')
+		.column_names({ "a", "b", "c" });
+	CSVToTsrReader reader("test.csv", format);
+
+	Tensor<double> temp = reader.to_tensor<double>();
+
+
 	checkMemorLeak();
 	return 0;
 }

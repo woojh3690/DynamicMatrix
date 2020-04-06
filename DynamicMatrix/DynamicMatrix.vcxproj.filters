@@ -38,6 +38,9 @@
     <ClInclude Include="include\Tensor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="include\CSVToTsrReader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
