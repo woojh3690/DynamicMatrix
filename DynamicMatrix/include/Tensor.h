@@ -14,8 +14,8 @@ using namespace std;
 
 namespace Matrix
 {
-	static bool dPlus(const vector<int>& shape, vector<int>& idx);
-	static bool dPlus(const vector<int>& shape, vector<int>& idx, int cur);
+	static bool dPlus(const vector<size_t>& shape, vector<size_t>& idx);
+	static bool dPlus(const vector<size_t>& shape, vector<size_t>& idx, int cur);
 
 	template <typename T=double>
 	class Tensor
@@ -32,20 +32,20 @@ namespace Matrix
 			this->m_childLink.push_back(item);
 		}
 
-		Tensor(const vector<int>& shape)
+		Tensor(const vector<size_t>& shape)
 		{
 			if (!shape.empty())
 			{
-				vector<int> child_shape(shape.begin() + 1, shape.end());
+				vector<size_t> child_shape(shape.begin() + 1, shape.end());
 				m_childLink.resize(shape.front());
-				for (int i = 0; i < shape.front(); i++)
+				for (size_t i = 0; i < shape.front(); i++)
 				{
 					m_childLink[i] = new Tensor<T>(child_shape);
 				}
 			}
 		}
 
-		Tensor(const vector<int>& shape, T initValue) : Tensor(shape)
+		Tensor(const vector<size_t>& shape, T initValue) : Tensor(shape)
 		{
 			fill(initValue);
 		}
@@ -112,24 +112,24 @@ namespace Matrix
 			}
 			else
 			{
-				int curFront = this->shape().front();
-				int mtxFront = tsr.shape().front();
+				size_t curFront = this->shape().front();
+				size_t mtxFront = tsr.shape().front();
 
 				if (curFront != mtxFront)
 					throw invalid_argument("Argument axis is invalid value!");
 
-				for (int i = 0; i < curFront; i++)
+				for (size_t i = 0; i < curFront; i++)
 				{
 					m_childLink[i]->concatenate(tsr[i], axis - 1);
 				}
 			}
 		}
 
-		Tensor<T> reshape(vector<int> newShape)
+		Tensor<T> reshape(vector<size_t> newShape)
 		{
-			int emptyIndex = -1;
-			int newVolume = 1;
-			for (int i = 0; i < newShape.size(); i++)
+			size_t emptyIndex = -1;
+			size_t newVolume = 1;
+			for (size_t i = 0; i < newShape.size(); i++)
 			{
 				if (newShape[i] != -1)
 					newVolume *= newShape[i];
@@ -137,10 +137,10 @@ namespace Matrix
 					emptyIndex = i;
 			}
 
-			int curVolume = this->volume();
+			size_t curVolume = this->volume();
 			if (emptyIndex != -1 && (curVolume % newVolume == 0))
 			{
-				int newDimShape = curVolume / newVolume;
+				size_t newDimShape = curVolume / newVolume;
 				newShape[emptyIndex] = newDimShape;
 				newVolume *= newDimShape;
 			}
@@ -152,9 +152,9 @@ namespace Matrix
 			}
 
 			Tensor<T> newTsr(newShape);
-			vector<int> newIdx(newShape.size());
-			vector<int> curShape = this->shape();
-			vector<int> curIdx(curShape.size());
+			vector<size_t> newIdx(newShape.size());
+			vector<size_t> curShape = this->shape();
+			vector<size_t> curIdx(curShape.size());
 
 			bool go = true;
 			do
@@ -172,8 +172,8 @@ namespace Matrix
 
 		Tensor<T>& fill(T initValue)
 		{
-			vector<int> curShape = this->shape();
-			vector<int> idx(curShape.size());
+			vector<size_t> curShape = this->shape();
+			vector<size_t> idx(curShape.size());
 			do
 			{
 				this->operator[](idx) = initValue;
@@ -181,16 +181,16 @@ namespace Matrix
 			return *this;
 		}
 
-		Tensor<T> slice(const int start) const
+		Tensor<T> slice(const size_t start) const
 		{
 			return slice(start, m_childLink.size());
 		}
 
-		Tensor<T> slice(const int start, const int end) const
+		Tensor<T> slice(const size_t start, const size_t end) const
 		{
 			Tensor<T> newTsr;
 
-			for (int i = start; i < end; i++)
+			for (size_t i = start; i < end; i++)
 			{
 				Tensor<T>* node = this->m_childLink[i];
 				newTsr.append(*node);
@@ -199,21 +199,21 @@ namespace Matrix
 			return newTsr;
 		}
 
-		void erase(const int index)
+		void erase(const size_t index)
 		{
 			delete m_childLink[index];
 			m_childLink.erase(m_childLink.begin() + index);
 		}
 
-		vector<int> shape() const
+		vector<size_t> shape() const
 		{
 			if (m_childLink.empty())
 			{
-				return vector<int>();
+				return vector<size_t>();
 			}
 
-			vector<int> curShape = m_childLink[0]->shape();
-			curShape.insert(curShape.begin(), (int)m_childLink.size());
+			vector<size_t> curShape = m_childLink[0]->shape();
+			curShape.insert(curShape.begin(), m_childLink.size());
 			return curShape;
 		}
 
@@ -232,7 +232,7 @@ namespace Matrix
 			else
 			{
 				string enter;
-				for (int i = 0; i < shapeSize - 1; i++)
+				for (size_t i = 0; i < shapeSize - 1; i++)
 				{
 					enter += "\n";
 				}
@@ -257,10 +257,10 @@ namespace Matrix
 			string::size_type idx = strTsr.find(l_bracket);
 			if (idx == string::npos)
 			{
-				int count = 0;
-				int startIdx = 0;
+				size_t count = 0;
+				size_t startIdx = 0;
 				T ptr;
-				for (int i = 0; i < strTsr.size(); i++)
+				for (size_t i = 0; i < strTsr.size(); i++)
 				{
 					char letter = strTsr[i];
 					if (letter == ',')
@@ -280,9 +280,9 @@ namespace Matrix
 			}
 			else
 			{
-				int count = 0;
-				int startIdx = 0;
-				for (int i = 0; i < strTsr.size(); i++)
+				size_t count = 0;
+				size_t startIdx = 0;
+				for (size_t i = 0; i < strTsr.size(); i++)
 				{
 					char letter = strTsr[i];
 					if (letter == l_bracket)
@@ -315,7 +315,7 @@ namespace Matrix
 			return strShape(this->shape());
 		}
 
-		string strShape(const vector<int>& shape) const
+		string strShape(const vector<size_t>& shape) const
 		{
 			string header = "(";
 			for (auto idx : shape)
@@ -328,8 +328,8 @@ namespace Matrix
 
 		Tensor<T> matmul(const Tensor<T>& tsr) const
 		{
-			vector<int> thisShape = this->shape();
-			vector<int> tsrShape = tsr.shape();
+			vector<size_t> thisShape = this->shape();
+			vector<size_t> tsrShape = tsr.shape();
 
 			// 현재는 두 계산할려고하는 함수가 둘다 2차원 행렬일때만 지원
 			if (thisShape.size() != 2 || tsrShape.size() != 2)
@@ -341,12 +341,12 @@ namespace Matrix
 			}
 
 			Tensor<T> newTsr({ thisShape.front(), tsrShape.back() });
-			for (int i = 0; i < thisShape.front(); i++)
+			for (size_t i = 0; i < thisShape.front(); i++)
 			{
-				for (int tsrI = 0; tsrI < tsrShape.back(); tsrI++)
+				for (size_t tsrI = 0; tsrI < tsrShape.back(); tsrI++)
 				{
 					T newVal = 0;
-					for (int j = 0; j < thisShape.back(); j++)
+					for (size_t j = 0; j < thisShape.back(); j++)
 					{
 						T thisVal = this->operator[](i)[j].value();
 						T tsrVal = tsr.operator[](j)[tsrI].value();
@@ -360,16 +360,16 @@ namespace Matrix
 
 		Tensor<T> transpose() const
 		{
-			vector<int> curShpae = this->shape();
+			vector<size_t> curShpae = this->shape();
 
 			// 현재는 2차원 텐서에 전치만 지원
 			if (curShpae.size() != 2)
 				throw invalid_argument("Currently we support only 2D Tensor.");
 
 			Tensor<T> newTsr({ curShpae[1], curShpae[0] });
-			for (int i = 0; i < curShpae[0]; i++)
+			for (size_t i = 0; i < curShpae[0]; i++)
 			{
-				for (int j = 0; j < curShpae[1]; j++)
+				for (size_t j = 0; j < curShpae[1]; j++)
 				{
 					newTsr[j][i] = this->operator[](i)[j];
 				}
@@ -377,9 +377,9 @@ namespace Matrix
 			return newTsr;
 		}
 
-		int volume() const
+		size_t volume() const
 		{
-			int indexLen = 1;
+			size_t indexLen = 1;
 			for (auto size : this->shape())
 				indexLen *= size;
 			return indexLen;
@@ -393,7 +393,7 @@ namespace Matrix
 		template<typename derived>
 		Tensor<derived> select(const Tensor<derived>& thenTsr, const Tensor<derived>& elseTsr) const
 		{
-			vector<int> curShape = this->shape();
+			vector<size_t> curShape = this->shape();
 			checkType<bool>();
 
 			// 이 인스턴스와 인자값들에 shape이 같은지 확인
@@ -403,7 +403,7 @@ namespace Matrix
 			}
 
 			Tensor<derived> selectTsr(curShape);
-			vector<int> idx(curShape.size());
+			vector<size_t> idx(curShape.size());
 			do
 			{
 				T boolValue = this->operator[](idx).value();
@@ -425,10 +425,10 @@ namespace Matrix
 			return m_value;
 		}
 
-		Tensor<T> broadcasting(const vector<int>& shape) const
+		Tensor<T> broadcasting(const vector<size_t>& shape) const
 		{
-			vector<int> curShape = this->shape();
-			vector<int> childShape(shape.begin() + 1, shape.end());
+			vector<size_t> curShape = this->shape();
+			vector<size_t> childShape(shape.begin() + 1, shape.end());
 			if (curShape != childShape)
 			{
 				throw invalid_argument("Cannot broadcasting " +
@@ -436,23 +436,23 @@ namespace Matrix
 			}
 
 			Tensor<T> result;
-			for (int i = 0; i < shape.front(); i++)
+			for (size_t i = 0; i < shape.front(); i++)
 			{
 				result.append(*this);
 			}
 			return result;
 		}
 
-		Tensor<double>& randomInit(int min, int max)
+		Tensor<double>& randomInit(T min, T max)
 		{
 			checkType<double>();
 
 			random_device rn;
 			mt19937_64 rnd(rn());
-			uniform_real_distribution<double> range(min, max);
+			uniform_real_distribution<T> range(min, max);
 
-			vector<int> curShape = this->shape();
-			vector<int> idx(curShape.size());
+			vector<size_t> curShape = this->shape();
+			vector<size_t> idx(curShape.size());
 			do
 			{
 				this->operator[](idx) = range(rnd);
@@ -465,9 +465,9 @@ namespace Matrix
 		Tensor<double> exp() const
 		{
 			checkType<double>();
-			vector<int> curShape = this->shape();
+			vector<size_t> curShape = this->shape();
 			Tensor<double> expTsr(curShape);
-			vector<int> idx(curShape.size());
+			vector<size_t> idx(curShape.size());
 			do
 			{
 				double value = this->operator[](idx).value();
@@ -481,9 +481,9 @@ namespace Matrix
 		{
 			checkType<double>();
 
-			vector<int> childShape = m_childLink[0]->shape();
+			vector<size_t> childShape = m_childLink[0]->shape();
 			Tensor<double> sumTsr(childShape, 0);
-			for (int i = 0; i < this->size(); i++)
+			for (size_t i = 0; i < this->size(); i++)
 			{
 				sumTsr = sumTsr + this->operator[](i);
 			}
@@ -499,9 +499,9 @@ namespace Matrix
 		Tensor<double> pow() const
 		{
 			checkType<double>();
-			vector<int> curShape = this->shape();
+			vector<size_t> curShape = this->shape();
 			Tensor<double> expTsr(curShape);
-			vector<int> idx(curShape.size());
+			vector<size_t> idx(curShape.size());
 			do
 			{
 				double value = this->operator[](idx).value();
@@ -513,9 +513,9 @@ namespace Matrix
 
 		Tensor<double> sqrt() const
 		{
-			vector<int> curShape = this->shape();
+			vector<size_t> curShape = this->shape();
 			Tensor<double> expTsr(curShape);
-			vector<int> idx(curShape.size());
+			vector<size_t> idx(curShape.size());
 			do
 			{
 				double value = this->operator[](idx).value();
@@ -528,31 +528,31 @@ namespace Matrix
 		/***************************************************/
 		/*                   operator                      */
 		/***************************************************/
-		Tensor<T>& operator[](const int n)
+		Tensor<T>& operator[](const size_t n)
 		{
 			return *m_childLink[n];
 		}
 
-		const Tensor<T>& operator[](const int n) const
+		const Tensor<T>& operator[](const size_t n) const
 		{
 			return *m_childLink[n];
 		}
 
-		Tensor<T>& operator[](const vector<int>& idxs)
+		Tensor<T>& operator[](const vector<size_t>& idxs)
 		{
 			if (!idxs.empty())
 			{
-				vector<int> child_idxs(idxs.begin() + 1, idxs.end());
+				vector<size_t> child_idxs(idxs.begin() + 1, idxs.end());
 				return m_childLink[idxs.front()]->operator[](child_idxs);
 			}
 			return *this;
 		}
 
-		const Tensor<T>& operator[](const vector<int>& idxs) const
+		const Tensor<T>& operator[](const vector<size_t>& idxs) const
 		{
 			if (!idxs.empty())
 			{
-				vector<int> child_idxs(idxs.begin() + 1, idxs.end());
+				vector<size_t> child_idxs(idxs.begin() + 1, idxs.end());
 				return m_childLink[idxs.front()]->operator[](child_idxs);
 			}
 			return *this;
@@ -571,7 +571,7 @@ namespace Matrix
 		Tensor<T>& operator=(const Tensor<T>& tsr)
 		{
 			this->~Tensor();
-			vector<int> rShape = tsr.shape();
+			vector<size_t> rShape = tsr.shape();
 			if (rShape.empty())
 			{
 				this->m_value = tsr.m_value;
@@ -579,7 +579,7 @@ namespace Matrix
 			else
 			{
 				m_childLink.resize(rShape.front());
-				for (int i = 0; i < rShape.front(); i++)
+				for (size_t i = 0; i < rShape.front(); i++)
 				{
 					m_childLink[i] = new Tensor<T>(tsr[i]);
 				}
@@ -595,7 +595,7 @@ namespace Matrix
 		return os << tsr.toString();
 	}
 
-	static bool dPlus(const vector<int>& shape, vector<int>& idx, size_t cur)
+	static bool dPlus(const vector<size_t>& shape, vector<size_t>& idx, size_t cur)
 	{
 		idx[cur]++;
 		if (shape[cur] <= idx[cur])
@@ -610,7 +610,7 @@ namespace Matrix
 		return true;
 	}
 
-	static bool dPlus(const vector<int>& shape, vector<int>& idx)
+	static bool dPlus(const vector<size_t>& shape, vector<size_t>& idx)
 	{
 		size_t cur = idx.size() - 1;
 		idx[cur]++;
@@ -629,8 +629,8 @@ namespace Matrix
 	//{ \
 	//	auto type = 0.1 + 0.1; \
 	//	Tensor<decltype(type)> result(lTsr.shape()); \
-	//	vector<int> formatShape = lTsr.shape();
-	//	vector<int> idx(formatShape.size());
+	//	vector<size_t> formatShape = lTsr.shape();
+	//	vector<size_t> idx(formatShape.size());
 	//	do
 	//	{
 	//		double tsrValue = lTsr[idx].value(); \
@@ -644,8 +644,8 @@ namespace Matrix
 	//{ \
 	//	auto type = 0.1 + 0.1; \
 	//	Tensor<decltype(type)> result(rTsr.shape()); \
-	//	vector<int> formatShape = rTsr.shape();
-	//	vector<int> idx(formatShape.size());
+	//	vector<size_t> formatShape = rTsr.shape();
+	//	vector<size_t> idx(formatShape.size());
 	//	do
 	//	{
 	//		double tsrValue = rTsr[idx].value(); \
@@ -657,17 +657,17 @@ namespace Matrix
 
 	//static auto operator+(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
 	//{ \
-	//	vector<int> lShape = lTsr.shape(); \
-	//	vector<int> rShape = rTsr.shape(); \
+	//	vector<size_t> lShape = lTsr.shape(); \
+	//	vector<size_t> rShape = rTsr.shape(); \
 	//	Tensor<double> newlTsr; \
 	//	Tensor<double> newrTsr; \
 	//	if (lShape != rShape) \
 	//	{ \
-	//		if (lShape == vector<int>({ 1 })) \
+	//		if (lShape == vector<size_t>({ 1 })) \
 	//		{ \
 	//			return operator+(lTsr[0].value(), rTsr); \
 	//		} \
-	//		else if (rShape == vector<int>({ 1 })) \
+	//		else if (rShape == vector<size_t>({ 1 })) \
 	//		{ \
 	//			return operator+(lTsr, rTsr[0].value()); \
 	//		} \
@@ -690,8 +690,8 @@ namespace Matrix
 	// \
 	//	auto type = 0.1 + 0.1; \
 	//	Tensor<decltype(type)> result(newlTsr.shape()); \
-	//	vector<int> formatShape = lTsr.shape();
-	//	vector<int> idx(formatShape.size());
+	//	vector<size_t> formatShape = lTsr.shape();
+	//	vector<size_t> idx(formatShape.size());
 	//	do
 	//	{
 	//		double tsrValue = newlTsr[idx].value(); \

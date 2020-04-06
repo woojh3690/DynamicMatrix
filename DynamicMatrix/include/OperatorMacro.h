@@ -11,8 +11,8 @@ inline auto operator##METHOD##(const Tensor<double>& lTsr, const double value) \
 { \
 	auto type = 0.1 ##METHOD## 0.1; \
 	Tensor<decltype(type)> result(lTsr.shape()); \
-	vector<int> formatShape = lTsr.shape(); \
-	vector<int> idx(formatShape.size()); \
+	vector<size_t> formatShape = lTsr.shape(); \
+	vector<size_t> idx(formatShape.size()); \
 	do \
 	{ \
 		double tsrValue = lTsr[idx].value(); \
@@ -26,8 +26,8 @@ inline auto operator##METHOD##(const double value, const Tensor<double>& rTsr) \
 { \
 	auto type = 0.1 ##METHOD## 0.1; \
 	Tensor<decltype(type)> result(rTsr.shape()); \
-	vector<int> formatShape = rTsr.shape(); \
-	vector<int> idx(formatShape.size()); \
+	vector<size_t> formatShape = rTsr.shape(); \
+	vector<size_t> idx(formatShape.size()); \
 	do \
 	{ \
 		double tsrValue = rTsr[idx].value(); \
@@ -39,17 +39,17 @@ inline auto operator##METHOD##(const double value, const Tensor<double>& rTsr) \
 #define MAKE_TENSOR_OPERATOR(METHOD) \
 inline auto operator##METHOD##(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
 { \
-	vector<int> lShape = lTsr.shape(); \
-	vector<int> rShape = rTsr.shape(); \
+	vector<size_t> lShape = lTsr.shape(); \
+	vector<size_t> rShape = rTsr.shape(); \
 	Tensor<double> newlTsr; \
 	Tensor<double> newrTsr; \
 	if (lShape != rShape) \
 	{ \
-		if (lShape == vector<int>({ 1 })) \
+		if (lShape == vector<size_t>({ 1 })) \
 		{ \
 			return operator##METHOD##(lTsr[0].value(), rTsr); \
 		} \
-		else if (rShape == vector<int>({ 1 })) \
+		else if (rShape == vector<size_t>({ 1 })) \
 		{ \
 			return operator##METHOD##(lTsr, rTsr[0].value()); \
 		} \
@@ -72,8 +72,8 @@ inline auto operator##METHOD##(const Tensor<double>& lTsr, const Tensor<double>&
  \
 	auto type = 0.1 ##METHOD## 0.1; \
 	Tensor<decltype(type)> result(newlTsr.shape()); \
-	vector<int> formatShape = lTsr.shape(); \
-	vector<int> idx(formatShape.size()); \
+	vector<size_t> formatShape = lTsr.shape(); \
+	vector<size_t> idx(formatShape.size()); \
 	do \
 	{ \
 		double tsrValue = newlTsr[idx].value(); \

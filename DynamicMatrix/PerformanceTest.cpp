@@ -38,13 +38,14 @@ void PerformanceTest::runTest()
 	expTest();
 	shapeTest();
 	volumeTest();
+	CSVReadTest();
 }
 
 void PerformanceTest::matmulTest()
 {
-	int temp = 10;
+	size_t len = 10;
 
-	Tensor<int> tensor1({ temp, temp });
+	Tensor<int> tensor1({ len, len });
 	tensor1[0][0] = 1;
 	tensor1[0][1] = 2;
 
@@ -54,7 +55,7 @@ void PerformanceTest::matmulTest()
 	tensor1[2][0] = 5;
 	tensor1[2][1] = 6;
 
-	Tensor<int> tensor2({ temp, temp });
+	Tensor<int> tensor2({ len, len });
 	tensor2[0][0] = 1;
 	tensor2[0][1] = 2;
 	tensor2[0][2] = 3;

@@ -8,25 +8,19 @@
 using namespace std;
 using namespace Matrix;
 
-void checkMemorLeak()
+
+void mainCode()
 {
-	if (_CrtDumpMemoryLeaks())
-	{
-		printf("a");
-	}
-	else
-	{
-		printf("a");
-	}
+	csv::CSVFormat format;
+	format.delimiter(',').column_names({ "a", "b", "c" });
+	Matrix::CSVToTsrReader reader("test.csv", format);
+	Tensor<double> a = reader.to_tensor<double>();
 }
 
 int main()
-{                                             
-	csv::CSVFormat format;
-	format.delimiter(',').column_names({ "a", "b", "c" });
-	Matrix::CSVToTsrReader reader("test.csv");
-	Tensor<double> a = reader.to_tensor<double>();
-
-	checkMemorLeak();
+{                     
+	//_CrtSetBreakAlloc(172);
+	mainCode();
+	_CrtDumpMemoryLeaks();
 	return 0;
 }
