@@ -22,12 +22,12 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="PerformanceTest.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>헤더 파일\test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MatrixData.h">
-      <Filter>헤더 파일\test</Filter>
+    <ClInclude Include="include\Tensor.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="PerformaceTest.h">
       <Filter>헤더 파일\test</Filter>
@@ -35,14 +35,8 @@
     <ClInclude Include="include\OperatorMacro.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="include\Tensor.h">
+    <ClInclude Include="include\TensorReader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="include\CSVToTsrReader.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

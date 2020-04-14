@@ -12,47 +12,62 @@
 #include "OperatorMacro.h"
 using namespace std;
 
-namespace Matrix
+namespace KDTLAB
 {
-	static bool dPlus(const vector<size_t>& shape, vector<size_t>& idx);
-	static bool dPlus(const vector<size_t>& shape, vector<size_t>& idx, int cur);
-
 	template <typename T=double>
 	class Tensor
 	{
 	public:
+		vector<int> m_shape;
+		vector<T*> m_data;
+		bool instanse = false;
+
+	public:
 		Tensor()
 		{
+			m_shape = { 0 };
 		}
 
 		Tensor(const T& value)
 		{
-			Tensor<T>* item = new Tensor<T>;
-			item->m_value = value;
-			this->m_childLink.push_back(item);
+			m_shape = { 1 };
+			m_data.push_back(new T(value));
 		}
 
-		Tensor(const vector<size_t>& shape)
+		Tensor(const vector<int>& shape) : Tensor(shape, 0)
 		{
-			if (!shape.empty())
-			{
-				vector<size_t> child_shape(shape.begin() + 1, shape.end());
-				m_childLink.resize(shape.front());
-				for (size_t i = 0; i < shape.front(); i++)
-				{
-					m_childLink[i] = new Tensor<T>(child_shape);
-				}
-			}
 		}
 
-		Tensor(const vector<size_t>& shape, T initValue) : Tensor(shape)
+		Tensor(const vector<int>& shape, T initValue) : m_shape(shape)
 		{
+			m_data.resize(splitVol(shape));
 			fill(initValue);
 		}
 
 		Tensor(const Tensor<T>& _Right)
 		{
-			this->operator=(_Right);
+			clear();
+			m_shape = _Right.m_shape;
+
+			if (_Right.instanse)
+			{
+				m_data = _Right.m_data;
+				instanse = true;
+			}
+			else
+			{
+				m_data.reserve(_Right.volume());
+				for (auto data : _Right.m_data)
+				{
+					m_data.push_back(new T(*data));
+				}
+			}
+		}
+
+		~Tensor()
+		{
+			if (!instanse)
+				clear();
 		}
 
 		template <typename NODETYPE>
@@ -68,313 +83,321 @@ namespace Matrix
 		DEFINE_OPERATOR(*)
 		DEFINE_OPERATOR(/)
 
-		~Tensor()
-		{
-			for (auto mtx : this->m_childLink)
-				delete mtx;
-		}
-
 	private:
-		vector<Tensor<T>*> m_childLink;
-		T m_value;
-	
 		template<typename check_T>
-		void checkType() const
+		inline void checkType() const
 		{
 			if (!std::is_same<T, check_T>::value)
 				throw invalid_argument("The select() function only can use when \
 					Tensor type is check_T.");
 		}
 
+		inline int splitVol(vector<int> shape, const unsigned int& axis = 0) const
+		{
+			int vol = 1;
+			for (vector<int>::size_type i = axis; i < shape.size(); i++)
+				vol *= shape[i];
+			return vol;
+		}
+
+		inline int item_count(const string& str) const
+		{
+			int dimIdx = -1;
+			int closeCount = 0;
+			for (int idx = 0; idx < str.size(); idx++)
+			{
+				if (str[idx] == '[')
+				{
+					dimIdx++;
+				}
+				else if (str[idx] == ']')
+				{
+					dimIdx--;
+					if (dimIdx == 0)
+					{
+						closeCount++;
+					}
+				}
+			}
+
+			return closeCount;
+		}
+
 	public:
 		/***************************************************/
 		/*                     API                         */
 		/***************************************************/
-		void append(T value)
+		void append(const T& value)
 		{
-			Tensor<T> item(value);
-			concatenate(item, 0);
-		}
-
-		void append(const Tensor<T>& tsr)
-		{
-			m_childLink.push_back(new Tensor<T>(tsr));
-		}
-
-		void concatenate(Tensor<T>& tsr, const int axis)
-		{
-			if (axis == 0)
+			if (m_shape.size() == 1)
 			{
-				for (auto clink : tsr.m_childLink)
-				{
-					this->m_childLink.push_back(new Tensor<T>(*clink));
-				}
+				m_data.push_back(new T(value));
+				m_shape.front()++;
 			}
 			else
-			{
-				size_t curFront = this->shape().front();
-				size_t mtxFront = tsr.shape().front();
-
-				if (curFront != mtxFront)
-					throw invalid_argument("Argument axis is invalid value!");
-
-				for (size_t i = 0; i < curFront; i++)
-				{
-					m_childLink[i]->concatenate(tsr[i], axis - 1);
-				}
-			}
+				throw invalid_argument("This is not 1d tensor");
 		}
 
-		Tensor<T> reshape(vector<size_t> newShape)
+		void append(const Tensor<T>& _Right)
 		{
-			size_t emptyIndex = -1;
-			size_t newVolume = 1;
-			for (size_t i = 0; i < newShape.size(); i++)
+			vector<int> childShape(m_shape.begin() + 1, m_shape.end());
+			if (childShape != _Right.m_shape)
 			{
-				if (newShape[i] != -1)
-					newVolume *= newShape[i];
+				if (m_data.size() == 0)
+				{
+					m_shape.insert(m_shape.end(), _Right.m_shape.begin(), _Right.m_shape.end());
+				}
 				else
-					emptyIndex = i;
-			}
-
-			size_t curVolume = this->volume();
-			if (emptyIndex != -1 && (curVolume % newVolume == 0))
-			{
-				size_t newDimShape = curVolume / newVolume;
-				newShape[emptyIndex] = newDimShape;
-				newVolume *= newDimShape;
-			}
-
-			if (newVolume != curVolume)
-			{
-				throw invalid_argument("Cannot reshape array of size " +
-					to_string(curVolume) + " into shape " + this->strShape(newShape));
-			}
-
-			Tensor<T> newTsr(newShape);
-			vector<size_t> newIdx(newShape.size());
-			vector<size_t> curShape = this->shape();
-			vector<size_t> curIdx(curShape.size());
-
-			bool go = true;
-			do
-			{
-				T value = this->operator[](curIdx).value();
-				newTsr[newIdx] = value;
-
-				go = dPlus(curShape, curIdx);
-				bool temp = dPlus(newShape, newIdx);
-				assert(go == temp);
-			} while (go);
-
-			return newTsr;
-		}
-
-		Tensor<T>& fill(T initValue)
-		{
-			vector<size_t> curShape = this->shape();
-			vector<size_t> idx(curShape.size());
-			do
-			{
-				this->operator[](idx) = initValue;
-			} while (dPlus(curShape, idx));
-			return *this;
-		}
-
-		Tensor<T> slice(const size_t start) const
-		{
-			return slice(start, m_childLink.size());
-		}
-
-		Tensor<T> slice(const size_t start, const size_t end) const
-		{
-			Tensor<T> newTsr;
-			for (size_t i = start; i < end; i++)
-			{
-				Tensor<T>* node = this->m_childLink[i];
-				newTsr.append(*node);
-			}
-			return newTsr;
-		}
-
-		Tensor<T> split(const size_t idx, unsigned int axis = 0)
-		{
-
-			if (axis == 0)
-			{
-				Tensor<T> result;
-				result.append(this->slice(0, idx));
-				result.append(this->slice(idx));
-				return result;
-			}
-			else
-			{
-				Tensor<T> result({2, 0});
-				Tensor<T> splited;
-				for (auto childTsr : m_childLink)
 				{
-					splited = childTsr->split(idx, axis - 1);
-					result[0].append(splited[0]);
-					result[1].append(splited[1]);
+					throw invalid_argument("Can't append _Right Tensor");
 				}
-				return result;
 			}
-		}
 
-		void erase(const size_t index)
-		{
-			delete m_childLink[index];
-			m_childLink.erase(m_childLink.begin() + index);
-		}
-
-		vector<size_t> shape() const
-		{
-			if (m_childLink.empty())
+			m_data.reserve(m_shape.size() + splitVol(childShape));
+			for (auto data : _Right.m_data)
 			{
-				return vector<size_t>();
+				m_data.push_back(new T(*data));
+			}
+			m_shape[0]++;
+		}
+
+		Tensor<T> concatenate(const Tensor<T>& _Right, const unsigned int& axis = 0) const
+		{
+			if (m_shape != _Right.m_shape)
+				throw invalid_argument("All the input tensor must have same number of dimensions");
+
+			// 새로운 배열 할당
+			Tensor<T> newTsr;
+			newTsr.m_shape = m_shape;
+			newTsr.m_shape[axis] *= 2;
+			newTsr.m_data.reserve(this->volume() + _Right.volume());
+
+			// 요소 복사
+			int copyVol = splitVol(m_shape, axis);
+			for (int idx = 0; idx < this->volume(); idx += copyVol)
+			{
+				for (int childIdx = idx; childIdx < idx + copyVol; childIdx++)
+				{
+					T value = *this->m_data[childIdx];
+					newTsr.m_data.push_back(new T(value));
+				}
+
+				for (int childIdx = idx; childIdx < idx + copyVol; childIdx++)
+				{
+					T value = *_Right.m_data[childIdx];
+					newTsr.m_data.push_back(new T(value));
+				}
 			}
 
-			vector<size_t> curShape = m_childLink[0]->shape();
-			curShape.insert(curShape.begin(), m_childLink.size());
-			return curShape;
+			return newTsr;
+		}
+
+		inline void fill(const T& initValue)
+		{
+			for (int i = 0; i < m_data.size(); i++)
+			{
+				m_data[i] = new T(initValue);
+			}
+		}
+
+		Tensor<T> slice(const int& start) const
+		{
+			return slice(start, m_shape.front());
+		}
+
+		Tensor<T> slice(const int& start, const int& end) const
+		{
+			int rowSize = end - start;
+			if (rowSize < 0)
+				throw invalid_argument("Index argument is invaild value.");
+
+			vector<int> childShape = m_shape;
+			childShape[0] = rowSize;
+			Tensor<T> newTsr;
+			newTsr.m_shape = childShape;
+			newTsr.m_data.reserve(splitVol(childShape));
+
+			int start_idx = start * splitVol(m_shape, 1);
+			std::copy(
+				this->m_data.begin() + start_idx,
+				this->m_data.begin() + start_idx + newTsr.volume(),
+				newTsr.m_data.begin()
+			);
+			return newTsr;
+		}
+
+		vector<Tensor<>> split(const int& idx, const unsigned int& axis = 0) const
+		{
+			int window = m_shape[axis];
+			int firstWindow = idx;
+			int lastWindow = window - idx;
+
+			Tensor<T> firstTsr;
+			firstTsr.m_shape = m_shape;
+			firstTsr.m_shape[axis] = firstWindow;
+			firstTsr.m_data.reserve(splitVol(firstTsr.m_shape));
+
+			Tensor<T> lastTsr;
+			lastTsr.m_shape = m_shape;
+			lastTsr.m_shape[axis] = lastWindow;
+			lastTsr.m_data.reserve(splitVol(lastTsr.m_shape));
+
+			for (int cur = 0; cur < m_data.size(); cur += window)
+			{
+				for (int firstCur = cur; firstCur < cur + firstWindow; firstCur++)
+				{
+					T value = *m_data[firstCur];
+					firstTsr.m_data.push_back(new T(value));
+				}
+
+				for (int lastCur = cur + firstWindow; lastCur < cur + window; lastCur++)
+				{
+					T value = *m_data[lastCur];
+					lastTsr.m_data.push_back(new T(value));
+				}
+			}
+
+			return { firstTsr, lastTsr };
+		}
+
+		void erase(const int& index)
+		{
+			m_data.erase(
+				m_data.begin() + index, 
+				m_data.begin() + index + splitVol(m_shape, 1)
+			);
+		}
+
+		inline vector<int> shape() const
+		{
+			return m_shape;
 		}
 
 		string toString() const
 		{
-			string result = "[";
-			size_t shapeSize = this->shape().size();
-			if (shapeSize == 1)
+			string left = "[";
+			string right = "]";
+
+			vector<string> before;
+			before.reserve((m_data.size()));
+			for (auto item : m_data)
+				before.push_back(to_string(*item));
+
+			vector<string> after;
+
+			for (int idx = (int)m_shape.size() - 1; idx >= 0; idx--)
 			{
-				for (auto child : this->m_childLink)
+				int window = m_shape[idx];
+				string item = left;
+				for (int i = 0, count = 1; i < before.size(); i++, count++)
 				{
-					result += to_string((*child).value()) + ", ";
+					item += before[i] + ", ";
+					if (count == window)
+					{
+						item.replace(item.size() - 2, item.size(), right);
+						after.push_back(item);
+
+						item = left;
+						count = 0;
+					}
 				}
-				result.replace(result.size() - 2, result.size(), "]");
+
+				before = after;
+				after.clear();
 			}
-			else
-			{
-				string enter;
-				for (size_t i = 0; i < shapeSize - 1; i++)
-				{
-					enter += "\n";
-				}
-				for (auto child : this->m_childLink)
-				{
-					result += child->toString() + "," + enter;
-				}
-				result.replace(result.size() - shapeSize, result.size(), "]");
-			}
-			return result;
+
+			return before[0];
 		}
-
-		bool loadFromString(const string& str)
+					
+		void loadFromString(string str)
 		{
-			this->~Tensor();
-			char l_bracket = '[';
-			char r_bracket = ']';
-			if (str.front() != l_bracket || str.back() != r_bracket)
-				throw invalid_argument("string format must be [] type");
-			
-			string strTsr = str.substr(1, str.size() - 2);
-			string::size_type idx = strTsr.find(l_bracket);
-			if (idx == string::npos)
+			clear();
+
+			// 배열 전체 복사
+			int split_l = -1;
+			T ptr;
+			for (int idx = 0; idx < str.size(); idx++)
 			{
-				size_t count = 0;
-				size_t startIdx = 0;
-				T ptr;
-				for (size_t i = 0; i < strTsr.size(); i++)
+				char aChar = str[idx];
+				if (aChar == ',' || aChar == ']')
 				{
-					char letter = strTsr[i];
-					if (letter == ',')
+					if (split_l != -1)
 					{
-						string item = strTsr.substr(startIdx, i - startIdx);
+						string item = str.substr(split_l, idx - split_l);
 						std::istringstream(item) >> ptr;
-						m_childLink.push_back(new Tensor());
-						m_childLink[size() - 1]->operator=(ptr);
-						startIdx = i+2;
+						m_data.push_back(new T(ptr));
+						split_l = -1;
 					}
-
 				}
-				string item = strTsr.substr(startIdx, strTsr.size());
-				std::istringstream(item) >> ptr;
-				m_childLink.push_back(new Tensor());
-				m_childLink[size() - 1]->operator=(ptr);
-			}
-			else
-			{
-				size_t count = 0;
-				size_t startIdx = 0;
-				for (size_t i = 0; i < strTsr.size(); i++)
+				else if (aChar != '[' && aChar != ' ')
 				{
-					char letter = strTsr[i];
-					if (letter == l_bracket)
+					if (split_l == -1)
 					{
-						count++;
-						if (count == 1)
-						{
-							startIdx = i;
-						}
-					}
-
-					if (letter == r_bracket)
-					{
-						count--;
-						if (count == 0)
-						{
-							string child_strTsr = strTsr.substr(startIdx, i - startIdx + 1);
-							Tensor* child_tsr = new Tensor();
-							child_tsr->loadFromString(child_strTsr);
-							m_childLink.push_back(child_tsr);
-						}
+						split_l = idx;
 					}
 				}
 			}
-			return true;
+
+			m_shape.clear();
+			m_shape.push_back(item_count(str));
+			while (m_shape.back() != 0)
+			{
+				str = str.substr(1, str.size() - 2);
+				auto split_l = str.find_first_of('[') + 1;
+				auto split_r = str.find_first_of(']');
+				str = str.substr(split_l, split_r - split_l);
+				m_shape.push_back(item_count(str));
+			}
+
+			m_shape.back() = (int)std::count(str.begin(), str.end(), ',') + 1;
 		}
 
 		string strShape() const
 		{
-			return strShape(this->shape());
+			return strShape(this->m_shape);
 		}
 
-		string strShape(const vector<size_t>& shape) const
+		string strShape(const vector<int>& shape) const
 		{
 			string header = "(";
 			for (auto idx : shape)
-			{
 				header += to_string(idx) + ", ";
-			}
 			header.replace(header.size() - 2, header.size(), ")");
 			return header;
 		}
 
-		Tensor<T> matmul(const Tensor<T>& tsr) const
+		Tensor<T> matmul(const Tensor<T>& _Right) const
 		{
-			vector<size_t> thisShape = this->shape();
-			vector<size_t> tsrShape = tsr.shape();
+			vector<int> curShape = this->shape();
+			int curShapeFront = curShape.front();
+			int curShapeBack = curShape.back();
+			vector<int> rShape = _Right.shape();
+			int rShapeFront = rShape.front();
+			int rShapeBack = rShape.back();
 
 			// 현재는 두 계산할려고하는 함수가 둘다 2차원 행렬일때만 지원
-			if (thisShape.size() != 2 || tsrShape.size() != 2)
+			if (curShape.size() != 2 || rShape.size() != 2)
 				throw invalid_argument("Currently the we support 2D Matrix multiply.");
 
-			if (thisShape.back() != tsrShape.front())
+			if (curShapeBack != rShapeFront)
 			{
 				throw invalid_argument("Argument axis is invalid value!");
 			}
 
-			Tensor<T> newTsr({ thisShape.front(), tsrShape.back() });
-			for (size_t i = 0; i < thisShape.front(); i++)
+			Tensor<T> newTsr({ curShapeFront, rShapeBack });
+#pragma omp parallel for
+			for (int i = 0; i < curShapeFront; i++)
 			{
-				for (size_t tsrI = 0; tsrI < tsrShape.back(); tsrI++)
+				for (int rIdx = 0; rIdx < rShapeBack; rIdx++)
 				{
 					T newVal = 0;
-					for (size_t j = 0; j < thisShape.back(); j++)
+					for (int j = 0; j < curShapeBack; j++)
 					{
-						T thisVal = this->operator[](i)[j].value();
-						T tsrVal = tsr.operator[](j)[tsrI].value();
+						T thisVal = *this->m_data[i * curShapeBack + j];
+						T tsrVal = *_Right.m_data[j * rShapeBack + rIdx];
 						newVal += thisVal * tsrVal;
 					}
-					newTsr[i][tsrI] = newVal;
+					newTsr[i][rIdx] = newVal;
 				}
 			}
 			return newTsr;
@@ -382,75 +405,80 @@ namespace Matrix
 
 		Tensor<T> transpose() const
 		{
-			vector<size_t> curShpae = this->shape();
-
 			// 현재는 2차원 텐서에 전치만 지원
-			if (curShpae.size() != 2)
+			if (m_shape.size() != 2)
 				throw invalid_argument("Currently we support only 2D Tensor.");
 
-			Tensor<T> newTsr({ curShpae[1], curShpae[0] });
-			for (size_t i = 0; i < curShpae[0]; i++)
+			int row = m_shape[0];
+			int col = m_shape[1];
+			Tensor<T> newTsr({ col, row });
+
+			for (int i = 0; i < row; i++)
 			{
-				for (size_t j = 0; j < curShpae[1]; j++)
+				for (int j = 0; j < col; j++)
 				{
-					newTsr[j][i] = this->operator[](i)[j];
+					*newTsr.m_data[j * row + i] = *m_data[i * col + j];
 				}
 			}
 			return newTsr;
 		}
 
-		size_t volume() const
+		inline int volume() const
 		{
-			size_t indexLen = 1;
-			for (auto size : this->shape())
-				indexLen *= size;
-			return indexLen;
+			return (int)m_data.size();
 		}
 
-		size_t size() const
+		inline int size() const
 		{
-			return m_childLink.size();
+			return m_shape[0];
 		}
 
 		template<typename derived>
 		Tensor<derived> select(const Tensor<derived>& thenTsr, const Tensor<derived>& elseTsr) const
 		{
-			vector<size_t> curShape = this->shape();
 			checkType<bool>();
 
 			// 이 인스턴스와 인자값들에 shape이 같은지 확인
+			vector<int> curShape = this->shape();
 			if ((curShape != thenTsr.shape()) || (curShape != elseTsr.shape()))
 			{
 				throw invalid_argument("The argument should be same shape of this.");
 			}
 
 			Tensor<derived> selectTsr(curShape);
-			vector<size_t> idx(curShape.size());
-			do
+			for (int idx = 0; idx < volume(); idx++)
 			{
-				T boolValue = this->operator[](idx).value();
+				bool boolValue = *m_data[idx];
 				if (boolValue)
-					selectTsr[idx] = thenTsr[idx];
+					*selectTsr.m_data[idx] = *thenTsr.m_data[idx];
 				else
-					selectTsr[idx] = elseTsr[idx];
-			} while (dPlus(curShape, idx));
+					*selectTsr.m_data[idx] = *elseTsr.m_data[idx];
+			}
 			return selectTsr;
 		}
 
 		T value() const
 		{
-			if (!m_childLink.empty())
-			{
-				throw invalid_argument("Tensor can't cast to Rvalue.");
-			}
-
-			return m_value;
+			if (m_data.size() == 1)
+				return *(m_data[0]);
+			else
+				throw runtime_error("This tensor is not scala");
 		}
 
-		Tensor<T> broadcasting(const vector<size_t>& shape) const
+		void clear()
 		{
-			vector<size_t> curShape = this->shape();
-			vector<size_t> childShape(shape.begin() + 1, shape.end());
+			for (auto item : m_data)
+			{
+				delete item;
+			}
+			m_shape = { 0 };
+			m_data.clear();
+		}
+
+		Tensor<T> broadcasting(const vector<int>& shape) const
+		{
+			vector<int> curShape = this->shape();
+			vector<int> childShape(shape.begin() + 1, shape.end());
 			if (curShape != childShape)
 			{
 				throw invalid_argument("Cannot broadcasting " +
@@ -458,7 +486,7 @@ namespace Matrix
 			}
 
 			Tensor<T> result;
-			for (size_t i = 0; i < shape.front(); i++)
+			for (int i = 0; i < shape.front(); i++)
 			{
 				result.append(*this);
 			}
@@ -473,39 +501,38 @@ namespace Matrix
 			mt19937_64 rnd(rn());
 			uniform_real_distribution<T> range(min, max);
 
-			vector<size_t> curShape = this->shape();
-			vector<size_t> idx(curShape.size());
-			do
+			for (auto data : m_data)
 			{
-				this->operator[](idx) = range(rnd);
-			} while (dPlus(curShape, idx));
+				*data = range(rnd);
+			}
 			return *this;
 		}
-		/***************************************************/
-		/*                    연산자                       */
-		/***************************************************/
+
+	//	/***************************************************/
+	//	/*                    연산자                       */
+	//	/***************************************************/
 		Tensor<double> exp() const
 		{
 			checkType<double>();
-			vector<size_t> curShape = this->shape();
-			Tensor<double> expTsr(curShape);
-			vector<size_t> idx(curShape.size());
-			do
+
+			Tensor<double> result;
+			result.m_shape = m_shape;
+			result.m_data.reserve(volume());
+			for (auto data : m_data)
 			{
-				double value = this->operator[](idx).value();
-				double exp_value = std::exp(value);
-				expTsr[idx] = exp_value;
-			} while (dPlus(curShape, idx));
-			return expTsr;
+				double* value = new double(std::exp(*data));
+				result.m_data.push_back(value);
+			}
+			return result;
 		}
 
 		Tensor<double> sum() const
 		{
 			checkType<double>();
-
-			vector<size_t> childShape = m_childLink[0]->shape();
+			
+			vector<int> childShape(m_shape.begin() + 1, m_shape.end());
 			Tensor<double> sumTsr(childShape, 0);
-			for (size_t i = 0; i < this->size(); i++)
+			for (int i = 0; i < this->size(); i++)
 			{
 				sumTsr = sumTsr + this->operator[](i);
 			}
@@ -521,89 +548,103 @@ namespace Matrix
 		Tensor<double> pow() const
 		{
 			checkType<double>();
-			vector<size_t> curShape = this->shape();
-			Tensor<double> expTsr(curShape);
-			vector<size_t> idx(curShape.size());
-			do
+			
+			Tensor<double> result;
+			result.m_shape = m_shape;
+			result.m_data.reserve(volume());
+			for (auto data : m_data)
 			{
-				double value = this->operator[](idx).value();
-				double exp_value = std::pow(value, 2);
-				expTsr[idx] = exp_value;
-			} while (dPlus(curShape, idx));
-			return expTsr;
+				double* value = new double(std::pow(*data, 2));
+				result.m_data.push_back(value);
+			}
+			return result;
 		}
 
 		Tensor<double> sqrt() const
 		{
-			vector<size_t> curShape = this->shape();
-			Tensor<double> expTsr(curShape);
-			vector<size_t> idx(curShape.size());
-			do
+			checkType<double>();
+
+			Tensor<double> result;
+			result.m_shape = m_shape;
+			result.m_data.reserve(volume());
+			for (auto data : m_data)
 			{
-				double value = this->operator[](idx).value();
-				double exp_value = std::sqrt(value);
-				expTsr[idx] = exp_value;
-			} while (dPlus(curShape, idx));
-			return expTsr;
-		}
-
-		/***************************************************/
-		/*                   operator                      */
-		/***************************************************/
-		Tensor<T>& operator[](const size_t n)
-		{
-			return *m_childLink[n];
-		}
-
-		const Tensor<T>& operator[](const size_t n) const
-		{
-			return *m_childLink[n];
-		}
-
-		Tensor<T>& operator[](const vector<size_t>& idxs)
-		{
-			if (!idxs.empty())
-			{
-				vector<size_t> child_idxs(idxs.begin() + 1, idxs.end());
-				return m_childLink[idxs.front()]->operator[](child_idxs);
+				double* value = new double(std::sqrt(*data));
+				result.m_data.push_back(value);
 			}
-			return *this;
+			return result;
 		}
 
-		const Tensor<T>& operator[](const vector<size_t>& idxs) const
+	//	/***************************************************/
+	//	/*                   operator                      */
+	//	/***************************************************/
+		Tensor<T> operator[](const unsigned int& n) const
 		{
-			if (!idxs.empty())
+			if (m_shape.size() <= 0)
 			{
-				vector<size_t> child_idxs(idxs.begin() + 1, idxs.end());
-				return m_childLink[idxs.front()]->operator[](child_idxs);
+				throw invalid_argument("Out of index.");
 			}
-			return *this;
-		}
 
-		Tensor<T>& operator=(const T n)
-		{
-			if (!m_childLink.empty())
-			{
-				throw invalid_argument("Can't allocate Rvalue to Tesnor(Lvalue)!");
-			}
-			m_value = n;
-			return *this;
-		}
+			Tensor<T> newTsr;
+			newTsr.instanse = true;
 
-		Tensor<T>& operator=(const Tensor<T>& tsr)
-		{
-			this->~Tensor();
-			vector<size_t> rShape = tsr.shape();
-			if (rShape.empty())
+			// 새로운 텐서 생성
+			if (m_shape.size() == 1)
 			{
-				this->m_value = tsr.m_value;
+				newTsr.m_shape[0] = 1;
+				newTsr.m_data.push_back(m_data[n]);
 			}
 			else
 			{
-				m_childLink.resize(rShape.front());
-				for (size_t i = 0; i < rShape.front(); i++)
+				int childVolume = splitVol(m_shape, 1);
+				vector<int> childShape(m_shape.begin() + 1, m_shape.end());
+
+				newTsr.m_shape = childShape;
+				newTsr.m_data.resize(childVolume);
+
+				// 데이터 카피
+				int startIdx = childVolume * n;
+				std::copy(
+					m_data.begin() + startIdx,
+					m_data.begin() + startIdx + childVolume,
+					newTsr.m_data.begin()
+				);
+			}
+
+			return newTsr;
+		}
+
+		Tensor<T>& operator=(const T& n)
+		{
+			if (m_data.size() > 1)
+			{
+				throw invalid_argument("Can't allocate scalar to tensor");
+			}
+
+			*m_data[0] = n;
+			return *this;
+		}
+
+		Tensor<T>& operator=(const Tensor<T>& _Right)
+		{
+			if (instanse)
+			{
+				if (m_shape != _Right.m_shape)
+					throw invalid_argument("Cannot copy tensor. Tensor shape does not match.");
+
+				for (int i = 0; i < _Right.volume(); i++)
 				{
-					m_childLink[i] = new Tensor<T>(tsr[i]);
+					*m_data[i] = *_Right.m_data[i];
+				}
+			}
+			else
+			{
+				clear();
+				m_shape = _Right.m_shape;
+				m_data.reserve(_Right.volume());
+				for (int i = 0; i < _Right.volume(); i++)
+				{
+					m_data.push_back(new T(*_Right.m_data[i]));
 				}
 			}
 
@@ -612,126 +653,84 @@ namespace Matrix
 	};
 
 	template <typename NODETYPE>
-	ostream & operator<<(ostream& os, Tensor<NODETYPE>& tsr)
+	ostream & operator<<(ostream& os, Tensor<NODETYPE>& _Right)
 	{
-		return os << tsr.toString();
+		os << _Right.toString();
 	}
 
-	static bool dPlus(const vector<size_t>& shape, vector<size_t>& idx, size_t cur)
-	{
-		idx[cur]++;
-		if (shape[cur] <= idx[cur])
-		{
-			idx[cur] = 0;
-			if (--cur == -1)
-				return false;
-
-			return dPlus(shape, idx, cur);
-		}
-
-		return true;
+	inline auto operator+(const Tensor<double>& lTsr, const double value) \
+	{ \
+		auto type = 0.1 + 0.1; \
+		Tensor<decltype(type)> result(lTsr.shape()); \
+		for (int idx = 0; idx < lTsr.volume(); idx++) \
+		{ \
+			*result.m_data[idx] = (*lTsr.m_data[idx]) + value; \
+		} \
+		return result; \
 	}
 
-	static bool dPlus(const vector<size_t>& shape, vector<size_t>& idx)
-	{
-		size_t cur = idx.size() - 1;
-		idx[cur]++;
-		if (shape[cur] <= idx[cur])
-		{
-			idx[cur] = 0;
-			if (--cur == -1)
-				return false;
-			return dPlus(shape, idx, cur);
-		}
-
-		return true;
+	inline auto operator+(const double value, const Tensor<double>& rTsr) \
+	{ \
+		auto type = 0.1 + 0.1; \
+		Tensor<decltype(type)> result(rTsr.shape()); \
+		for (int idx = 0; idx < rTsr.volume(); idx++) \
+		{ \
+			*result.m_data[idx] = value + (*rTsr.m_data[idx]); \
+		} \
+		return result; \
 	}
-
-	//static auto operator+(const Tensor<double>& lTsr, const double value) \
-	//{ \
-	//	auto type = 0.1 + 0.1; \
-	//	Tensor<decltype(type)> result(lTsr.shape()); \
-	//	vector<size_t> formatShape = lTsr.shape();
-	//	vector<size_t> idx(formatShape.size());
-	//	do
-	//	{
-	//		double tsrValue = lTsr[idx].value(); \
-	//		result[idx] = tsrValue + value; \
-	//	} while (dPlus(formatShape, idx));
-
-	//	return result; \
-	//}
-
-	//static auto operator+(const double value, const Tensor<double>& rTsr) \
-	//{ \
-	//	auto type = 0.1 + 0.1; \
-	//	Tensor<decltype(type)> result(rTsr.shape()); \
-	//	vector<size_t> formatShape = rTsr.shape();
-	//	vector<size_t> idx(formatShape.size());
-	//	do
-	//	{
-	//		double tsrValue = rTsr[idx].value(); \
-	//		result[idx] = value + tsrValue; \
-	//	} while (dPlus(formatShape, idx));
-
-	//	return result; \
-	//}
-
-	//static auto operator+(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
-	//{ \
-	//	vector<size_t> lShape = lTsr.shape(); \
-	//	vector<size_t> rShape = rTsr.shape(); \
-	//	Tensor<double> newlTsr; \
-	//	Tensor<double> newrTsr; \
-	//	if (lShape != rShape) \
-	//	{ \
-	//		if (lShape == vector<size_t>({ 1 })) \
-	//		{ \
-	//			return operator+(lTsr[0].value(), rTsr); \
-	//		} \
-	//		else if (rShape == vector<size_t>({ 1 })) \
-	//		{ \
-	//			return operator+(lTsr, rTsr[0].value()); \
-	//		} \
-	//		else if (lShape.size() > rShape.size()) \
-	//		{ \
-	//			newlTsr = lTsr; \
-	//			newrTsr = rTsr.broadcasting(lShape); \
-	//		} \
-	//		else if (lShape.size() < rShape.size())\
-	//		{ \
-	//			newlTsr = lTsr.broadcasting(rShape); \
-	//			newrTsr = rTsr; \
-	//		} \
-	//	} \
-	//	else \
-	//	{ \
-	//		newlTsr = lTsr; \
-	//		newrTsr = rTsr; \
-	//	} \
-	// \
-	//	auto type = 0.1 + 0.1; \
-	//	Tensor<decltype(type)> result(newlTsr.shape()); \
-	//	vector<size_t> formatShape = lTsr.shape();
-	//	vector<size_t> idx(formatShape.size());
-	//	do
-	//	{
-	//		double tsrValue = newlTsr[idx].value(); \
-	//		double value = newrTsr[idx].value(); \
-	//		result[idx] = tsrValue + value; \
-	//	} while (dPlus(formatShape, idx));
-	//	return result; \
-	//}
+	
+	inline auto operator+(const Tensor<double>& lTsr, const Tensor<double>& rTsr) \
+	{ \
+		vector<int> lShape = lTsr.shape(); \
+		vector<int> rShape = rTsr.shape(); \
+		Tensor<double> newlTsr; \
+		Tensor<double> newrTsr; \
+		if (lShape != rShape) \
+		{ \
+			if (lShape == vector<int>({ 1 })) \
+			{ \
+				return operator+(lTsr[0].value(), rTsr); \
+			} \
+			else if (rShape == vector<int>({ 1 })) \
+			{ \
+				return operator+(lTsr, rTsr[0].value()); \
+			} \
+			else if (lTsr.volume() > rTsr.volume()) \
+			{ \
+				newrTsr = rTsr.broadcasting(lShape); \
+				newlTsr = lTsr; \
+			} \
+			else if (lTsr.volume() < rTsr.volume())\
+			{ \
+				newlTsr = lTsr.broadcasting(rShape); \
+				newrTsr = rTsr; \
+			} \
+		} \
+		else \
+		{ \
+			newlTsr = lTsr; \
+			newrTsr = rTsr; \
+		} \
+		auto type = 0.1 + 0.1; \
+		Tensor<decltype(type)> result(newrTsr.shape()); \
+		for (int idx = 0; idx < newrTsr.volume(); idx++) \
+		{ \
+			*result.m_data[idx] = (*newlTsr.m_data[idx]) + (*newrTsr.m_data[idx]); \
+		} \
+		return result; \
+	}
 
 	MAKE_OPERATOR(> )
 	MAKE_OPERATOR(< )
-	MAKE_OPERATOR(>=)
-	MAKE_OPERATOR(<=)
+	MAKE_OPERATOR(>= )
+	MAKE_OPERATOR(<= )
 
 	MAKE_OPERATOR(-)
-	MAKE_OPERATOR(+)
+	//MAKE_OPERATOR(+)
 	MAKE_OPERATOR(*)
-	MAKE_OPERATOR(/)
+	MAKE_OPERATOR(/ )
+
 }
 
 #endif // !TENSOR_H_

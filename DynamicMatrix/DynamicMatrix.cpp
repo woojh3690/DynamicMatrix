@@ -1,24 +1,25 @@
 ﻿#include <iostream>
-#include "PerformaceTest.h"
 #include "include/Tensor.h"
-#include "include/CSVToTsrReader.h"
 #include <time.h>
 #include <vector>
 #include <crtdbg.h>
+//#include "2dMatrix/Matrix.h"
 using namespace std;
-using namespace Matrix;
+using namespace KDTLAB;
 
-
-void mainCode()
-{
-	PerformanceTest test;
-	test.runTest();
-}
 
 int main()
-{                     
-	//_CrtSetBreakAlloc(172);
-	mainCode();
-	_CrtDumpMemoryLeaks();
+{ 
+	Tensor<> a({ 3,3 }, 4);
+	Tensor<> b({ 3,3 }, 2);
+
+
+	/*Tensor<> result1 = a + b;
+	Tensor<> result2 = a - b;
+	Tensor<> result3 = a * b;
+	Tensor<> result4 = a / b;*/
+
+	Tensor<> result = a.concatenate(b, 1);
+
 	return 0;
 }
