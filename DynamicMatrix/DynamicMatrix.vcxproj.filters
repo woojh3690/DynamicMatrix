@@ -16,26 +16,29 @@
     <Filter Include="헤더 파일\test">
       <UniqueIdentifier>{b3a0c1c3-6d32-4fec-b958-e569cb8c9b5b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\test">
+      <UniqueIdentifier>{ec41cdc4-4ed4-411c-a9d9-2651e0573024}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DynamicMatrix.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="PerformanceTest.cpp">
-      <Filter>헤더 파일\test</Filter>
+      <Filter>소스 파일\test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Tensor.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="PerformaceTest.h">
       <Filter>헤더 파일\test</Filter>
     </ClInclude>
-    <ClInclude Include="include\OperatorMacro.h">
+    <ClInclude Include="include\tensor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="include\TensorReader.h">
+    <ClInclude Include="include\tensor_reader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="include\operator_macro.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

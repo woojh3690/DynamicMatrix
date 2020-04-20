@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <sstream>
 #include <random>
-#include "OperatorMacro.h"
+#include "operator_macro.h"
 using namespace std;
 
 namespace KDTLAB
@@ -34,14 +34,14 @@ namespace KDTLAB
 			m_data.push_back(new T(value));
 		}
 
-		Tensor(const vector<int>& shape) : Tensor(shape, 0)
-		{
-		}
-
 		Tensor(const vector<int>& shape, T initValue) : m_shape(shape)
 		{
 			m_data.resize(splitVol(shape));
 			fill(initValue);
+		}
+
+		Tensor(const vector<int>& shape) : Tensor(shape, 0)
+		{
 		}
 
 		Tensor(const Tensor<T>& _Right)
@@ -228,6 +228,9 @@ namespace KDTLAB
 
 		vector<Tensor<>> split(const int& idx, const unsigned int& axis = 0) const
 		{
+			if (axis > m_shape.size() - 1)
+				throw invalid_argument("Argument axis is out of shape size");
+
 			int window = m_shape[axis];
 			int firstWindow = idx;
 			int lastWindow = window - idx;
@@ -655,7 +658,7 @@ namespace KDTLAB
 	template <typename NODETYPE>
 	ostream & operator<<(ostream& os, Tensor<NODETYPE>& _Right)
 	{
-		os << _Right.toString();
+		return os << _Right.toString();
 	}
 
 	inline auto operator+(const Tensor<double>& lTsr, const double value) \

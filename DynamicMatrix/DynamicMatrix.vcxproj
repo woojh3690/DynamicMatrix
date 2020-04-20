@@ -180,9 +180,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\OperatorMacro.h" />
-    <ClInclude Include="include\Tensor.h" />
-    <ClInclude Include="include\TensorReader.h" />
+    <ClInclude Include="include\operator_macro.h" />
+    <ClInclude Include="include\tensor.h" />
+    <ClInclude Include="include\tensor_reader.h" />
     <ClInclude Include="PerformaceTest.h" />
   </ItemGroup>
   <ItemGroup>
