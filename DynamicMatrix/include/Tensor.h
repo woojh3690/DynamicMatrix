@@ -400,7 +400,7 @@ namespace KDTLAB
 						T tsrVal = *_Right.m_data[j * rShapeBack + rIdx];
 						newVal += thisVal * tsrVal;
 					}
-					newTsr[i][rIdx] = newVal;
+					*newTsr.m_data[i * rShapeBack + rIdx] = newVal;
 				}
 			}
 			return newTsr;
