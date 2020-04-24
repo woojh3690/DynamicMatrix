@@ -153,7 +153,7 @@ namespace KDTLAB
 				}
 			}
 
-			m_data.reserve(m_shape.size() + splitVol(childShape));
+			m_data.reserve(m_data.size() + splitVol(childShape));
 			for (auto data : _Right.m_data)
 			{
 				m_data.push_back(new T(*data));
@@ -494,7 +494,7 @@ namespace KDTLAB
 				result.append(*this);
 			}
 			return result;
-		}
+		}  
 
 		Tensor<double>& randomInit(T min, T max)
 		{
@@ -581,7 +581,43 @@ namespace KDTLAB
 	//	/***************************************************/
 	//	/*                   operator                      */
 	//	/***************************************************/
-		Tensor<T> operator[](const unsigned int& n) const
+		Tensor<T> operator[](const unsigned int& n)
+		{
+			if (m_shape.size() <= 0)
+			{
+				throw invalid_argument("Out of index.");
+			}
+
+			Tensor<T> newTsr;
+			newTsr.instanse = true;
+
+			// 새로운 텐서 생성
+			if (m_shape.size() == 1)
+			{
+				newTsr.m_shape[0] = 1;
+				newTsr.m_data.push_back(m_data[n]);
+			}
+			else
+			{
+				int childVolume = splitVol(m_shape, 1);
+				vector<int> childShape(m_shape.begin() + 1, m_shape.end());
+
+				newTsr.m_shape = childShape;
+				newTsr.m_data.resize(childVolume);
+
+				// 데이터 카피
+				int startIdx = childVolume * n;
+				std::copy(
+					m_data.begin() + startIdx,
+					m_data.begin() + startIdx + childVolume,
+					newTsr.m_data.begin()
+				);
+			}
+
+			return newTsr;
+		}
+
+		const Tensor<T> operator[](const unsigned int& n) const
 		{
 			if (m_shape.size() <= 0)
 			{
