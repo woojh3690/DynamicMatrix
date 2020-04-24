@@ -489,9 +489,14 @@ namespace KDTLAB
 			}
 
 			Tensor<T> result;
+			result.m_shape = shape;
+			result.m_data.reserve(splitVol(shape));
 			for (int i = 0; i < shape.front(); i++)
 			{
-				result.append(*this);
+				for (auto data : m_data)
+				{
+					result.m_data.push_back(new T(*data));
+				}
 			}
 			return result;
 		}  
