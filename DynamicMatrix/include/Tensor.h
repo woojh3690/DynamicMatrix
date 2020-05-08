@@ -236,7 +236,7 @@ namespace KDTLAB
 
 		inline void fill(const T& initValue)
 		{
-			for (int i = 0; i < m_data.size(); i++)
+			for (std::size_t i = 0; i < m_data.size(); i++)
 			{
 				m_data[i] = new T(initValue);
 			}
@@ -334,7 +334,7 @@ namespace KDTLAB
 			{
 				int window = m_shape[idx];
 				string item = left;
-				for (int i = 0, count = 1; i < before.size(); i++, count++)
+				for (std::size_t i = 0, count = 1; i < before.size(); i++, count++)
 				{
 					item += before[i] + ", ";
 					if (count == window)
@@ -708,7 +708,25 @@ namespace KDTLAB
 
 		bool operator==(const Tensor<T>& _rhs)
 		{
+			bool same = true;
+			if (m_shape == _rhs.m_shape)
+			{
+				int len = m_data.size();
+				for (int idx = 0; idx < len; idx++)
+				{
+					if (*m_data[idx] != *_rhs.m_data[idx])
+					{
+						same = false;
+						break;
+					}
+				}
+			}
+			else
+			{
+				same = false;
+			}
 
+			return same;
 		}
 	};
 

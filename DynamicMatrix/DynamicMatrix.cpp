@@ -26,5 +26,13 @@ int main()
 		std::cout << item << std::endl;
 	}
 
+	auto vec2 = vec;
+	vec2.exp();
+
+	if (vec2 == vec)
+		std::cout << "같다" << std::endl;
+	else
+		std::cout << "다르다" << std::endl;
+
 	return 0;
 }
