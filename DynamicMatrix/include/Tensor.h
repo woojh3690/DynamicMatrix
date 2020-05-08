@@ -17,11 +17,15 @@ namespace KDTLAB
 	template <typename T=double>
 	class Tensor
 	{
-	public:
+		template<class derived>
+		friend class Tensor;
+
+	private:
 		vector<int> m_shape;
 		vector<T*> m_data;
 		bool instanse = false;
 
+	public:
 		class iterator : std::iterator<std::input_iterator_tag, int>
 		{
 			int _ptr;
@@ -644,27 +648,22 @@ namespace KDTLAB
 			newTsr.instanse = true;
 
 			// 새로운 텐서 생성
-			if (m_shape.size() == 1)
-			{
-				newTsr.m_shape[0] = 1;
-				newTsr.m_data.push_back(m_data[n]);
-			}
+			vector<int> childShape(m_shape.begin() + 1, m_shape.end());
+			if (childShape.size() == 0)
+				newTsr.m_shape = {1};
 			else
-			{
-				int childVolume = splitVol(m_shape, 1);
-				vector<int> childShape(m_shape.begin() + 1, m_shape.end());
-
 				newTsr.m_shape = childShape;
-				newTsr.m_data.resize(childVolume);
 
-				// 데이터 카피
-				int startIdx = childVolume * n;
-				std::copy(
-					m_data.begin() + startIdx,
-					m_data.begin() + startIdx + childVolume,
-					newTsr.m_data.begin()
-				);
-			}
+			int childVolume = splitVol(m_shape, 1);
+			newTsr.m_data.resize(childVolume);
+
+			// 데이터 카피
+			int startIdx = childVolume * n;
+			std::copy(
+				m_data.begin() + startIdx,
+				m_data.begin() + startIdx + childVolume,
+				newTsr.m_data.begin()
+			);
 			return newTsr;
 		}
 

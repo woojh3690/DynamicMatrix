@@ -19,9 +19,13 @@ int main()
 		}
 	}
 
-	for (auto item : vec)
+	/*for (auto item : vec)
 	{
 		std::cout << item << std::endl;
-	}
+	}*/
+
+	Tensor<> d1({ 10 }, 2);
+	auto temp = d1[4];
+
 	return 0;
 }
