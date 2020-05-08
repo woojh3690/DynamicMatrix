@@ -48,7 +48,9 @@ namespace KDTLAB
 
 			Tensor<T> operator*()
 			{ 
-				return m_tsr->operator[](_ptr);
+				Tensor<T> item;
+				item = m_tsr->operator[](_ptr);
+				return item;
 			}
 
 			bool operator==(iterator other) const

@@ -9,23 +9,22 @@ using namespace KDTLAB;
 
 
 int main()
-{ 
-	Tensor<int> vec({ 3, 4 });
-	for (int i = 0; i < 3; i++)
+{
+	int row = 3;
+	int col = 4;
+	Tensor<int> vec({ row, col });
+	for (int i = 0; i < row; i++)
 	{
-		for (int j = 0; j < 4; j++)
+		for (int j = 0; j < col; j++)
 		{
-			vec[i][j] = i * 4 + j;
+			vec[i][j] = i * col + j;
 		}
 	}
 
-	/*for (auto item : vec)
+	for (auto item : vec)
 	{
 		std::cout << item << std::endl;
-	}*/
-
-	Tensor<> d1({ 10 }, 2);
-	auto temp = d1[4];
+	}
 
 	return 0;
 }
