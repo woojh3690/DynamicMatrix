@@ -22,6 +22,42 @@ namespace KDTLAB
 		vector<T*> m_data;
 		bool instanse = false;
 
+		class iterator : std::iterator<std::input_iterator_tag, int>
+		{
+			int _ptr;
+			Tensor<T>* m_tsr;
+		public:
+			explicit iterator(int ptr, Tensor<T>* tsr) : _ptr(ptr), m_tsr(tsr) {}
+
+			iterator& operator++() 
+			{ 
+				++_ptr;
+				return (*this);
+			}
+
+			iterator operator++(int)
+			{
+				iterator retval = *this;
+				++_ptr;
+				return retval;
+			}
+
+			Tensor<T> operator*()
+			{ 
+				return m_tsr->operator[](_ptr);
+			}
+
+			bool operator==(iterator other) const
+			{
+				return _ptr == other._ptr;
+			}
+
+			bool operator!=(iterator other) const
+			{
+				return _ptr != other._ptr;
+			}
+		};
+
 	public:
 		Tensor()
 		{
@@ -501,7 +537,8 @@ namespace KDTLAB
 			return result;
 		}  
 
-		Tensor<double>& randomInit(T min, T max)
+		// 표준 정규분포를 따르는 랜던값들로 초기화
+		Tensor<T>& randomInit(T min, T max)
 		{
 			checkType<double>();
 
@@ -514,6 +551,16 @@ namespace KDTLAB
 				*data = range(rnd);
 			}
 			return *this;
+		}
+
+		iterator begin()
+		{
+			return iterator(0, this);
+		}
+
+		iterator end()
+		{
+			return iterator(size(), this);
 		}
 
 	//	/***************************************************/
@@ -586,7 +633,7 @@ namespace KDTLAB
 	//	/***************************************************/
 	//	/*                   operator                      */
 	//	/***************************************************/
-		Tensor<T> operator[](const unsigned int& n)
+		Tensor<T> operator[](const unsigned int& n) const
 		{
 			if (m_shape.size() <= 0)
 			{
@@ -618,43 +665,6 @@ namespace KDTLAB
 					newTsr.m_data.begin()
 				);
 			}
-
-			return newTsr;
-		}
-
-		const Tensor<T> operator[](const unsigned int& n) const
-		{
-			if (m_shape.size() <= 0)
-			{
-				throw invalid_argument("Out of index.");
-			}
-
-			Tensor<T> newTsr;
-			newTsr.instanse = true;
-
-			// 새로운 텐서 생성
-			if (m_shape.size() == 1)
-			{
-				newTsr.m_shape[0] = 1;
-				newTsr.m_data.push_back(m_data[n]);
-			}
-			else
-			{
-				int childVolume = splitVol(m_shape, 1);
-				vector<int> childShape(m_shape.begin() + 1, m_shape.end());
-
-				newTsr.m_shape = childShape;
-				newTsr.m_data.resize(childVolume);
-
-				// 데이터 카피
-				int startIdx = childVolume * n;
-				std::copy(
-					m_data.begin() + startIdx,
-					m_data.begin() + startIdx + childVolume,
-					newTsr.m_data.begin()
-				);
-			}
-
 			return newTsr;
 		}
 
@@ -702,7 +712,7 @@ namespace KDTLAB
 		return os << _Right.toString();
 	}
 
-	inline auto operator+(const Tensor<double>& lTsr, const double value) \
+	/*inline auto operator+(const Tensor<double>& lTsr, const double value) \
 	{ \
 		auto type = 0.1 + 0.1; \
 		Tensor<decltype(type)> result(lTsr.shape()); \
@@ -763,7 +773,7 @@ namespace KDTLAB
 			*result.m_data[idx] = (*newlTsr.m_data[idx]) + (*newrTsr.m_data[idx]); \
 		} \
 		return result; \
-	}
+	}*/
 
 	MAKE_OPERATOR(> )
 	MAKE_OPERATOR(< )
@@ -771,7 +781,7 @@ namespace KDTLAB
 	MAKE_OPERATOR(<= )
 
 	MAKE_OPERATOR(-)
-	//MAKE_OPERATOR(+)
+	MAKE_OPERATOR(+)
 	MAKE_OPERATOR(*)
 	MAKE_OPERATOR(/ )
 
