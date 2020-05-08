@@ -86,20 +86,20 @@ namespace KDTLAB
 		{
 		}
 
-		Tensor(const Tensor<T>& _Right)
+		Tensor(const Tensor<T>& _rhs)
 		{
 			clear();
-			m_shape = _Right.m_shape;
+			m_shape = _rhs.m_shape;
 
-			if (_Right.instanse)
+			if (_rhs.instanse)
 			{
-				m_data = _Right.m_data;
+				m_data = _rhs.m_data;
 				instanse = true;
 			}
 			else
 			{
-				m_data.reserve(_Right.volume());
-				for (auto data : _Right.m_data)
+				m_data.reserve(_rhs.volume());
+				for (auto data : _rhs.m_data)
 				{
 					m_data.push_back(new T(*data));
 				}
@@ -180,39 +180,39 @@ namespace KDTLAB
 				throw invalid_argument("This is not 1d tensor");
 		}
 
-		void append(const Tensor<T>& _Right)
+		void append(const Tensor<T>& _rhs)
 		{
 			vector<int> childShape(m_shape.begin() + 1, m_shape.end());
-			if (childShape != _Right.m_shape)
+			if (childShape != _rhs.m_shape)
 			{
 				if (m_data.size() == 0)
 				{
-					m_shape.insert(m_shape.end(), _Right.m_shape.begin(), _Right.m_shape.end());
+					m_shape.insert(m_shape.end(), _rhs.m_shape.begin(), _rhs.m_shape.end());
 				}
 				else
 				{
-					throw invalid_argument("Can't append _Right Tensor");
+					throw invalid_argument("Can't append _rhs Tensor");
 				}
 			}
 
 			m_data.reserve(m_data.size() + splitVol(childShape));
-			for (auto data : _Right.m_data)
+			for (auto data : _rhs.m_data)
 			{
 				m_data.push_back(new T(*data));
 			}
 			m_shape[0]++;
 		}
 
-		Tensor<T> concatenate(const Tensor<T>& _Right, const unsigned int& axis = 0) const
+		Tensor<T> concatenate(const Tensor<T>& _rhs, const unsigned int& axis = 0) const
 		{
-			if (m_shape != _Right.m_shape)
+			if (m_shape != _rhs.m_shape)
 				throw invalid_argument("All the input tensor must have same number of dimensions");
 
 			// 새로운 배열 할당
 			Tensor<T> newTsr;
 			newTsr.m_shape = m_shape;
 			newTsr.m_shape[axis] *= 2;
-			newTsr.m_data.reserve(this->volume() + _Right.volume());
+			newTsr.m_data.reserve(this->volume() + _rhs.volume());
 
 			// 요소 복사
 			int copyVol = splitVol(m_shape, axis);
@@ -226,7 +226,7 @@ namespace KDTLAB
 
 				for (int childIdx = idx; childIdx < idx + copyVol; childIdx++)
 				{
-					T value = *_Right.m_data[childIdx];
+					T value = *_rhs.m_data[childIdx];
 					newTsr.m_data.push_back(new T(value));
 				}
 			}
@@ -411,12 +411,12 @@ namespace KDTLAB
 			return header;
 		}
 
-		Tensor<T> matmul(const Tensor<T>& _Right) const
+		Tensor<T> matmul(const Tensor<T>& _rhs) const
 		{
 			vector<int> curShape = this->shape();
 			int curShapeFront = curShape.front();
 			int curShapeBack = curShape.back();
-			vector<int> rShape = _Right.shape();
+			vector<int> rShape = _rhs.shape();
 			int rShapeFront = rShape.front();
 			int rShapeBack = rShape.back();
 
@@ -439,7 +439,7 @@ namespace KDTLAB
 					for (int j = 0; j < curShapeBack; j++)
 					{
 						T thisVal = *this->m_data[i * curShapeBack + j];
-						T tsrVal = *_Right.m_data[j * rShapeBack + rIdx];
+						T tsrVal = *_rhs.m_data[j * rShapeBack + rIdx];
 						newVal += thisVal * tsrVal;
 					}
 					*newTsr.m_data[i * rShapeBack + rIdx] = newVal;
@@ -680,37 +680,42 @@ namespace KDTLAB
 			return *this;
 		}
 
-		Tensor<T>& operator=(const Tensor<T>& _Right)
+		Tensor<T>& operator=(const Tensor<T>& _rhs)
 		{
 			if (instanse)
 			{
-				if (m_shape != _Right.m_shape)
+				if (m_shape != _rhs.m_shape)
 					throw invalid_argument("Cannot copy tensor. Tensor shape does not match.");
 
-				for (int i = 0; i < _Right.volume(); i++)
+				for (int i = 0; i < _rhs.volume(); i++)
 				{
-					*m_data[i] = *_Right.m_data[i];
+					*m_data[i] = *_rhs.m_data[i];
 				}
 			}
 			else
 			{
 				clear();
-				m_shape = _Right.m_shape;
-				m_data.reserve(_Right.volume());
-				for (int i = 0; i < _Right.volume(); i++)
+				m_shape = _rhs.m_shape;
+				m_data.reserve(_rhs.volume());
+				for (int i = 0; i < _rhs.volume(); i++)
 				{
-					m_data.push_back(new T(*_Right.m_data[i]));
+					m_data.push_back(new T(*_rhs.m_data[i]));
 				}
 			}
 
 			return *this;
 		}
+
+		bool operator==(const Tensor<T>& _rhs)
+		{
+
+		}
 	};
 
 	template <typename NODETYPE>
-	ostream & operator<<(ostream& os, Tensor<NODETYPE>& _Right)
+	ostream & operator<<(ostream& os, Tensor<NODETYPE>& _rhs)
 	{
-		return os << _Right.toString();
+		return os << _rhs.toString();
 	}
 
 	/*inline auto operator+(const Tensor<double>& lTsr, const double value) \
