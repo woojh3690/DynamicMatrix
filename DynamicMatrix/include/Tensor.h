@@ -1,5 +1,5 @@
 ﻿#ifndef _TENSOR_H_
-#define _TENSOR_H_ 2.0.0
+#define _TENSOR_H_ 2.0.1
 
 #include <vector>
 #include <iostream>
@@ -30,7 +30,7 @@ namespace KDTLAB
 		class iterator : std::iterator<std::input_iterator_tag, int>
 		{
 		public:
-			typedef T difference_type;
+			typedef int difference_type;
 
 			typedef Tensor<T> value_type;
 			typedef Tensor<T>& reference;
@@ -970,4 +970,4 @@ namespace KDTLAB
 /*
  * Copyright (c) by Woo,Jun-Hyeok(woojh3690@gmail.com). All rights reserved.
  * Consult your license regarding permissions and restrictions.
-V2.0.0 */
+V2.0.1 */
