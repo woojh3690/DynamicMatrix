@@ -1,5 +1,5 @@
 ﻿#ifndef _TENSOR_H_
-#define _TENSOR_H_
+#define _TENSOR_H_ 2.0.0
 
 #include <vector>
 #include <iostream>
@@ -24,43 +24,161 @@ namespace KDTLAB
 		vector<int> m_shape;
 		vector<T*> m_data;
 		bool instanse = false;
+		bool iter = false;
 
 	public:
 		class iterator : std::iterator<std::input_iterator_tag, int>
 		{
-			int _ptr;
-			Tensor<T>* m_tsr;
 		public:
-			explicit iterator(int ptr, Tensor<T>* tsr) : _ptr(ptr), m_tsr(tsr) {}
+			typedef T difference_type;
+
+			typedef Tensor<T> value_type;
+			typedef Tensor<T>& reference;
+			typedef Tensor<T>* pointer;
+			typedef std::random_access_iterator_tag iterator_category;
+
+			int _idx;
+			pointer _ptr = new value_type;
+			pointer m_tsr = new value_type;
+
+		public:
+			explicit iterator(int ptr, Tensor<T>* tsr) : _idx(ptr), m_tsr(tsr) 
+			{
+				changePointer();
+			}
+
+			iterator(const iterator& _rhs)
+			{
+				this->operator=(_rhs);
+			}
 
 			iterator& operator++() 
 			{ 
-				++_ptr;
+				++_idx;
+				changePointer();
 				return (*this);
 			}
-
 			iterator operator++(int)
 			{
 				iterator retval = *this;
-				++_ptr;
+				++_idx;
+				changePointer();
 				return retval;
 			}
 
-			Tensor<T> operator*()
-			{ 
-				Tensor<T> item;
-				item = m_tsr->operator[](_ptr);
-				return item;
+			iterator& operator--()
+			{
+				--_idx;
+				changePointer();
+				return (*this);
+			}
+			iterator operator--(int)
+			{
+				iterator retval = *this;
+				--_idx;
+				changePointer();
+				return retval;
+			}
+
+			iterator& operator+=(int n)
+			{
+				_idx += n;
+				changePointer();
+				return *this;
+			}
+			iterator& operator-=(int n)
+			{
+				_idx -= n;
+				changePointer();
+				return *this;
+			}
+
+			iterator operator+(int n)
+			{
+				iterator temp = *this;
+				return temp += n;
+			}
+			iterator operator-(int n)
+			{
+				iterator temp = *this;
+				return temp -= n;
+			}
+
+			reference operator*() const
+			{
+				return *_ptr;
+			}
+			pointer operator->()
+			{
+				return _ptr;
 			}
 
 			bool operator==(iterator other) const
 			{
-				return _ptr == other._ptr;
+				return _idx == other._idx;
 			}
-
 			bool operator!=(iterator other) const
 			{
-				return _ptr != other._ptr;
+				return _idx != other._idx;
+			}
+
+			bool operator<(const iterator& rhs) const
+			{
+				return _idx < rhs._idx;
+			}
+			bool operator>(const iterator& rhs) const
+			{
+				return _idx > rhs._idx;
+			}
+			bool operator<=(const iterator& rhs) const
+			{
+				return _idx <= rhs._idx;
+			}
+			bool operator>=(const iterator& rhs) const
+			{
+				return _idx >= rhs._idx;
+			}
+			difference_type operator-(const iterator& rhs) const
+			{
+				return _idx - rhs._idx;
+			}
+
+			iterator& operator=(const iterator& rhs)
+			{
+				_idx = rhs._idx;
+				_ptr = new value_type(*rhs._ptr);
+				_ptr->iter = true;
+				m_tsr = rhs.m_tsr;
+				return *this;
+			}
+
+		private:
+			void changePointer()
+			{
+				if (_idx < 0 || _idx >= m_tsr->shape().front())
+					return;
+
+				_ptr->m_data.clear();
+				_ptr->instanse = true;
+				_ptr->iter = true;
+
+				// 새로운 텐서 생성
+				vector<int> childShape(m_tsr->m_shape.begin() + 1, m_tsr->m_shape.end());
+				if (childShape.size() == 0)
+					_ptr->m_shape = { 1 };
+				else
+					_ptr->m_shape = childShape;
+
+				int childVolume = m_tsr->splitVol(m_tsr->m_shape, 1);		
+				_ptr->m_data.resize(childVolume);
+
+				// 데이터 카피
+				int startIdx = childVolume * _idx;
+				std::copy(
+					m_tsr->m_data.begin() + startIdx,
+					m_tsr->m_data.begin() + startIdx + childVolume,
+					_ptr->m_data.begin()
+				);
 			}
 		};
 
@@ -92,6 +210,26 @@ namespace KDTLAB
 			m_shape = _rhs.m_shape;
 
 			if (_rhs.instanse)
+			{
+				m_data = _rhs.m_data;
+				instanse = true;
+			}
+			else
+			{
+				m_data.reserve(_rhs.volume());
+				for (auto data : _rhs.m_data)
+				{
+					m_data.push_back(new T(*data));
+				}
+			}
+		}
+
+		Tensor(const Tensor<T>&& _rhs)
+		{
+			clear();
+			m_shape = _rhs.m_shape;
+
+			if (_rhs.instanse && !_rhs.iter)
 			{
 				m_data = _rhs.m_data;
 				instanse = true;
@@ -544,13 +682,13 @@ namespace KDTLAB
 		}  
 
 		// 표준 정규분포를 따르는 랜던값들로 초기화
-		Tensor<T>& randomInit(T min, T max)
+		Tensor<double>& randomInit(double min, double max)
 		{
 			checkType<double>();
 
 			random_device rn;
 			mt19937_64 rnd(rn());
-			uniform_real_distribution<T> range(min, max);
+			uniform_real_distribution<double> range(min, max);
 
 			for (auto data : m_data)
 			{
@@ -558,6 +696,22 @@ namespace KDTLAB
 			}
 			return *this;
 		}
+
+		Tensor<int>& randomInit(int min, int max)
+		{
+			checkType<int>();
+
+			random_device rn;
+			mt19937_64 rnd(rn());
+			uniform_int_distribution<int> range(min, max);
+
+			for (auto data : m_data)
+			{
+				*data = range(rnd);
+			}
+			return *this;
+		}
+
 
 		iterator begin()
 		{
@@ -812,3 +966,8 @@ namespace KDTLAB
 }
 
 #endif // !TENSOR_H_
+
+/*
+ * Copyright (c) by Woo,Jun-Hyeok(woojh3690@gmail.com). All rights reserved.
+ * Consult your license regarding permissions and restrictions.
+V2.0.0 */

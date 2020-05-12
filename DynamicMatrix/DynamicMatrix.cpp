@@ -7,32 +7,28 @@
 using namespace std;
 using namespace KDTLAB;
 
-
 int main()
 {
-	int row = 3;
+	// 텐서 생성
+	int row = 100;
 	int col = 4;
-	Tensor<int> vec({ row, col });
-	for (int i = 0; i < row; i++)
-	{
-		for (int j = 0; j < col; j++)
-		{
-			vec[i][j] = i * col + j;
-		}
-	}
+	Tensor<double> vec({ row, col });
+	vec.randomInit(0.0, 1000.0);
 
 	for (auto item : vec)
 	{
 		std::cout << item << std::endl;
 	}
 
-	auto vec2 = vec;
-	vec2.exp();
+	std::sort(vec.begin(), vec.end(), [](Tensor<double> a, Tensor<double> b) { 
+		return a[0].value() < b[0].value();
+	});
 
-	if (vec2 == vec)
-		std::cout << "같다" << std::endl;
-	else
-		std::cout << "다르다" << std::endl;
+	std::cout << "-----------------------------------" << std::endl;
+	for (auto item : vec)
+	{
+		std::cout << item << std::endl;
+	}
 
 	return 0;
 }
