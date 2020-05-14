@@ -10,25 +10,15 @@ using namespace KDTLAB;
 int main()
 {
 	// 텐서 생성
-	int row = 100;
-	int col = 4;
-	Tensor<double> vec({ row, col });
-	vec.randomInit(0.0, 1000.0);
+	int row = 2;
+	Tensor<int> vec1({ row, 4 });
+	vec1.randomInit(0, 1000);
 
-	for (auto item : vec)
-	{
-		std::cout << item << std::endl;
-	}
+	Tensor<int> vec2({ row, 1 });
+	vec2.randomInit(0, 1000);
 
-	std::sort(vec.begin(), vec.end(), [](Tensor<double> a, Tensor<double> b) { 
-		return a[0].value() < b[0].value();
-	});
+	auto temp = vec1.concatenate(vec2);
 
-	std::cout << "-----------------------------------" << std::endl;
-	for (auto item : vec)
-	{
-		std::cout << item << std::endl;
-	}
 
 	return 0;
 }

@@ -1,5 +1,5 @@
 ﻿#ifndef _TENSOR_H_
-#define _TENSOR_H_ 2.0.1
+#define _TENSOR_H_ 2.0.2
 
 #include <vector>
 #include <iostream>
@@ -341,35 +341,67 @@ namespace KDTLAB
 			m_shape[0]++;
 		}
 
+		//Tensor<T> concatenate(const Tensor<T>& _rhs, const unsigned int& axis = 0) const
+		//{
+		//	if (m_shape != _rhs.m_shape)
+		//		throw invalid_argument("All the input tensor must have same number of dimensions");
+
+		//	// 새로운 배열 할당
+		//	Tensor<T> newTsr;
+		//	newTsr.m_shape = m_shape;
+		//	newTsr.m_shape[axis] *= 2;
+		//	newTsr.m_data.reserve(this->volume() + _rhs.volume());
+
+		//	// 요소 복사
+		//	int copyVol = splitVol(m_shape, axis);
+		//	for (int idx = 0; idx < this->volume(); idx += copyVol)
+		//	{
+		//		for (int childIdx = idx; childIdx < idx + copyVol; childIdx++)
+		//		{
+		//			T value = *this->m_data[childIdx];
+		//			newTsr.m_data.push_back(new T(value));
+		//		}
+
+		//		for (int childIdx = idx; childIdx < idx + copyVol; childIdx++)
+		//		{
+		//			T value = *_rhs.m_data[childIdx];
+		//			newTsr.m_data.push_back(new T(value));
+		//		}
+		//	}
+
+		//	return newTsr;
+		//}
+
 		Tensor<T> concatenate(const Tensor<T>& _rhs, const unsigned int& axis = 0) const
 		{
-			if (m_shape != _rhs.m_shape)
-				throw invalid_argument("All the input tensor must have same number of dimensions");
+			if (m_shape.size() == _rhs.m_shape.size())
+				for (int i = 0; i < m_shape.size(); ++i)
+					if (i != axis && m_shape[i] != _rhs.m_shape[i])
+						throw invalid_argument("Can't concatenate shape.");
+			else
+				throw invalid_argument("Shape of _rhs is not match.");
 
-			// 새로운 배열 할당
-			Tensor<T> newTsr;
-			newTsr.m_shape = m_shape;
-			newTsr.m_shape[axis] *= 2;
-			newTsr.m_data.reserve(this->volume() + _rhs.volume());
+			Tensor<T> temp;
+			temp.m_shape = m_shape;
+			temp.m_shape[axis] += _rhs.m_shape[axis];
+			temp.m_data.reserve(splitVol(temp.m_shape));
+			
+			int vol = splitVol(m_shape);
+			int thisVol = splitVol(m_shape, axis);
+			int rhsVol = splitVol(_rhs.m_shape, axis);
 
-			// 요소 복사
-			int copyVol = splitVol(m_shape, axis);
-			for (int idx = 0; idx < this->volume(); idx += copyVol)
+			int thisIdx = 0;
+			int rhsIdx = 0;
+			for (; thisIdx < vol; thisIdx += thisVol, rhsIdx += rhsVol)
 			{
-				for (int childIdx = idx; childIdx < idx + copyVol; childIdx++)
-				{
-					T value = *this->m_data[childIdx];
-					newTsr.m_data.push_back(new T(value));
-				}
+				for (int i = thisIdx; i < thisIdx + thisVol; ++i)
+					temp.m_data.push_back(new T(*m_data[i]));
 
-				for (int childIdx = idx; childIdx < idx + copyVol; childIdx++)
-				{
-					T value = *_rhs.m_data[childIdx];
-					newTsr.m_data.push_back(new T(value));
-				}
+				for (int i = rhsIdx; i < rhsIdx + rhsVol; ++i)
+					temp.m_data.push_back(new T(*_rhs.m_data[i]));
 			}
 
-			return newTsr;
+			return temp;
 		}
 
 		inline void fill(const T& initValue)
